@@ -1,6 +1,9 @@
 /* =============================================================
-   admin.js —— 后台。hash 路由：#/overview #/reviews #/shops #/tastes
-   #/settings #/uploads #/maint。所有写操作都会带上 CSRF 头。
+   admin.js —— 后台。hash 路由：#/overview #/projects #/project?id=N #/release
+   #/tasks #/cmd #/reviews #/shops #/tastes #/settings #/uploads #/maint。
+   所有写操作都会带上 CSRF 头。
+   v14 干活台：项目/待放行/任务/指令 与管理小程序「工作台」同源同接口，
+   状态全在服务端 sqlite —— 手机建项目、电脑出成片，两边接力互不等待。
    ============================================================= */
 (function () {
   'use strict';
@@ -122,7 +125,8 @@
   }
 
   /* ---------------- 骨架 ---------------- */
-  const NAV = [['overview', '概览'], ['reviews', '点评'], ['shops', '店铺'], ['tastes', '标签'],
+  const NAV = [['overview', '概览'], ['projects', '项目'], ['release', '待放行'], ['tasks', '任务'],
+    ['cmd', '指令'], ['reviews', '点评'], ['shops', '店铺'], ['tastes', '标签'],
     ['settings', '站点配置'], ['uploads', '图库'], ['maint', '维护']];
   function shell(active, body) {
     root.innerHTML = '<div class="adm-top"><div class="mt">' + L.mascot({ mouth: 'open' }) + '</div>' +
@@ -189,6 +193,9 @@
         statCard('合计', bsize(s.total_bytes), s.db_err ? '读库有错' : '健康') + '</div></div></div>';
 
     body += '<div class="btnrow" style="margin-top:12px">' +
+      '<button class="btn p" type="button" data-nav="projects">去项目干活</button>' +
+      '<button class="btn" type="button" data-nav="release">待放行</button>' +
+      '<button class="btn" type="button" data-nav="tasks">任务队列</button>' +
       '<a class="btn" href="/api/admin/export">导出内容 JSON</a>' +
       '<button class="btn" type="button" data-nav="uploads">去图库</button>' +
       '<button class="btn" type="button" data-nav="maint">去维护</button></div>';
@@ -555,6 +562,17 @@
 
   /* ---------------- 站点配置 ---------------- */
   const LONG_KEYS = ['seo_description', 'ip_bio', 'ip_quote', 'announcement', 'footer_note', 'site_tagline'];
+  const PIPE_KEYS = [
+    ['pipeline_enabled', '总开关：发布后自动产四平台待审文案'],
+    ['pipeline_xiaohongshu', '小红书文案'],
+    ['pipeline_zhihu', '知乎文案'],
+    ['pipeline_weibo', '微博文案'],
+    ['pipeline_douyin', '抖音文案（需成片+cookie）'],
+    ['pipeline_video', '视频渲染'],
+    ['pipeline_gzh', '公众号同步发文'],
+    ['pipeline_wxpush', '订阅消息推送'],
+    ['pipeline_happyhorse', '人物镜头 happyhorse 生视频（项目制）'],
+  ];
   const KEY_LABEL = {
     site_title: '站点名（顶栏）', site_tagline: '副标题', seo_description: 'SEO 描述',
     ip_name: 'IP 名字', ip_handle: 'IP 账号名', ip_avatar: 'IP 头像路径', ip_city: 'IP 城市',
@@ -570,7 +588,13 @@
     try {
       const d = await api.get('/api/admin/settings');
       const s = d.settings || {};
-      panel.innerHTML = '<div class="box"><h4>站点与 IP 文案（改完点保存，前台立刻生效）</h4><form class="adm-form" id="setf">' +
+      panel.innerHTML = '<div class="box"><h4>AI 流水线开关（与小程序设置页同源，改完点保存）</h4>' +
+        '<div class="mswrap" id="pipebox">' + PIPE_KEYS.map((k) =>
+          '<label><input type="checkbox" data-pkey="' + k[0] + '"' + (String(s[k[0]]) === '1' ? ' checked' : '') + '>' + esc(k[1]) + '</label>').join('') + '</div>' +
+        '<div class="btnrow" style="margin-top:8px">' + inp('每日成片上限（video_daily_cap）', 'vdcap', s.video_daily_cap || '0', 'type="number" style="max-width:160px"') +
+        '<button class="btn p" type="button" id="pipesave">保存流水线开关</button>' +
+        '<span class="hint" style="margin:0">四平台开关只产待审稿，放行才发</span></div></div>' +
+        '<div class="box" style="margin-top:11px"><h4>站点与 IP 文案（改完点保存，前台立刻生效）</h4><form class="adm-form" id="setf">' +
         (d.keys || []).map((k) => LONG_KEYS.indexOf(k) >= 0 ? ta(KEY_LABEL[k] || k, k, s[k], 3) : inp(KEY_LABEL[k] || k, k, s[k])).join('') +
         (d.keys && d.keys.indexOf('mp_qrcode') >= 0
           ? '<label>上传小程序码图片（传好自动填路径，再点保存）<input type="file" id="mpqrup" accept="image/*"></label>'
@@ -578,6 +602,14 @@
         '<div class="btnrow"><button class="btn p" type="submit">保存全部</button>' +
         '<span class="hint" style="margin:0">只有白名单里的 key 会写库</span></div></form></div>';
       const mpUp = document.getElementById('mpqrup');
+      document.getElementById('pipesave').addEventListener('click', async () => {
+        const settings = {};
+        document.querySelectorAll('#pipebox [data-pkey]').forEach((x) => { settings[x.getAttribute('data-pkey')] = x.checked ? '1' : '0'; });
+        const capEl = document.getElementById('setf').elements.vdcap;
+        if (capEl && capEl.value !== '') settings.video_daily_cap = String(Number(capEl.value) || 0);
+        try { await api.put('/api/admin/settings', { settings: settings }); L.toast('流水线开关已保存'); }
+        catch (e) { L.toast(e.message); }
+      });
       if (mpUp) mpUp.addEventListener('change', async (e) => {
         const file = e.target.files[0];
         if (!file) return;
@@ -677,10 +709,515 @@
     }));
   }
 
+  /* ============ 干活台（v14）：项目 / 待放行 / 任务 / 指令 ============ */
+  const TS_LABEL = { pending: '排队中', running: '执行中', done: '完成', failed: '失败', skipped: '跳过' };
+  const PROJ_ST = { open: '进行中', review: '等放行', done: '已交付', archived: '已归档' };
+  const PLAT_OPTS = [['douyin', '抖音'], ['xiaohongshu', '小红书'], ['zhihu', '知乎'], ['weibo', '微博']];
+  const PLAT_LABEL = { douyin: '抖音', xiaohongshu: '小红书', zhihu: '知乎', gzh: '公众号', wxpush: '订阅消息' };
+  let opsTimer = null;
+  function stopOpsPoll() { if (opsTimer) { clearTimeout(opsTimer); opsTimer = null; } }
+  function scheduleOps(fn, ms) { stopOpsPoll(); opsTimer = setTimeout(fn, ms || 15000); }
+  function hashParam(k) {
+    const m = (location.hash.split('?')[1] || '').match(new RegExp('(?:^|&)' + k + '=([^&]*)'));
+    return m ? decodeURIComponent(m[1]) : '';
+  }
+  const jarr = (v) => Array.isArray(v) ? v : (typeof v === 'string' ? (JSON.parse(v || '[]') || []) : []);
+  const tsPill = (st) => '<span class="pill ' + (st === 'done' ? 'ok' : st === 'failed' ? 'no' : st === 'running' ? 'run' : st === 'pending' ? 'wait' : '') + '">' + esc(TS_LABEL[st] || st) + '</span>';
+
+  /* ---------------- 项目列表 ---------------- */
+  const pjf = { status: 'open' };
+  async function vProjects() {
+    shell('projects', load('正在读项目…'));
+    const panel = document.getElementById('panel');
+    try {
+      const d = await api.get('/api/admin/projects?status=' + pjf.status + '&limit=100');
+      const list = d.projects || [];
+      const rows = list.map((p) => {
+        const last = p.last_step_kind ? esc(p.last_step_label || p.last_step_kind) + ' · ' + esc(TS_LABEL[p.last_step_status] || p.last_step_status) : '还没开跑';
+        return '<tr><td><b>' + esc(p.title) + '</b><div class="hint" style="margin:0">' + esc(p.created_by) + ' · ' + stamp(p.created_at) + '</div></td>' +
+          '<td><span class="pill ' + (p.status === 'open' ? 'run' : p.status === 'review' ? 'wait' : p.status === 'done' ? 'ok' : '') + '">' + esc(PROJ_ST[p.status] || p.status) + '</span></td>' +
+          '<td>' + num(p.asset_count) + ' 素材</td><td>' + num(p.step_count) + ' 步</td>' +
+          '<td class="hide-sm">' + last + '</td>' +
+          '<td><div class="btnrow"><a class="btn sm p" href="#/project?id=' + num(p.id) + '">进工作区</a>' +
+          (p.status === 'archived' ? '<button class="btn sm" type="button" data-unarch=' + num(p.id) + '>恢复</button>' : '<button class="btn sm" type="button" data-arch=' + num(p.id) + '>归档</button>') +
+          '<button class="btn sm d" type="button" data-pdel=' + num(p.id) + '>删</button></div></td></tr>';
+      }).join('');
+      panel.innerHTML =
+        '<div class="box"><h4>项目工作区 · 手机小程序同一套状态</h4>' +
+        '<div class="hint">一条视频/一组文案 = 一个项目：出分镜 → 改分镜 → 出成片 → 出平台文案 → 待放行。在手机上开的项目这里接着跑，反之亦然。</div>' +
+        '<div class="btnrow" style="margin-top:8px">' +
+        sel('状态', 'pjs', pjf.status, [['open', '进行中'], ['review', '等放行'], ['done', '已交付'], ['archived', '已归档'], ['all', '全部']]) +
+        '<button class="btn" type="button" id="pjgo">筛</button>' +
+        '<button class="btn a" type="button" id="pjnew">+ 新立项</button></div></div>' +
+        '<div class="box" style="margin-top:11px"><h4>共 ' + num(list.length) + ' 个</h4>' +
+        '<table class="adm-t"><thead><tr><th>项目</th><th>状态</th><th>素材</th><th>步骤</th><th class="hide-sm">最近一步</th><th>操作</th></tr></thead>' +
+        '<tbody>' + (rows || '<tr><td colspan="6">还没有项目，点「新立项」或去小程序开一个</td></tr>') + '</tbody></table></div>' +
+        '<div id="pjnewwrap" style="margin-top:11px"></div>';
+      document.getElementById('pjgo').addEventListener('click', () => { pjf.status = document.getElementById('pjs').value; vProjects(); });
+      document.getElementById('pjnew').addEventListener('click', () => showProjectNew());
+      panel.querySelectorAll('[data-arch]').forEach((b) => b.addEventListener('click', async () => {
+        try { await api.put('/api/admin/projects/' + b.getAttribute('data-arch'), { status: 'archived' }); L.toast('已归档'); vProjects(); }
+        catch (e) { L.toast(e.message); }
+      }));
+      panel.querySelectorAll('[data-unarch]').forEach((b) => b.addEventListener('click', async () => {
+        try { await api.put('/api/admin/projects/' + b.getAttribute('data-unarch'), { status: 'open' }); L.toast('已恢复'); vProjects(); }
+        catch (e) { L.toast(e.message); }
+      }));
+      panel.querySelectorAll('[data-pdel]').forEach((b) => b.addEventListener('click', async () => {
+        if (!confirm('删项目会连带删它的步骤记录（素材库原图不删），确定？')) return;
+        try { await api.del('/api/admin/projects/' + b.getAttribute('data-pdel')); L.toast('删掉了'); vProjects(); }
+        catch (e) { L.toast(e.message); }
+      }));
+    } catch (e) { panel.innerHTML = errBox(e); }
+  }
+
+  const pjNew = { paths: [] };
+  function showProjectNew() {
+    pjNew.paths = [];
+    const wrap = document.getElementById('pjnewwrap');
+    wrap.innerHTML = '<div class="box"><h4>新立项</h4><form class="adm-form" id="pjnf">' +
+      inp('标题 *', 'title', '') +
+      ta('制片提示词（想要什么片子、重点、口吻…可先空着到工作区再补）', 'brief', '', 4) +
+      '<label>首批素材（可多选，传完点「立项」一起带进项目）<input type="file" id="pjun" accept="image/*" multiple></label>' +
+      '<div id="pjnstaged" class="thumbs"></div>' +
+      '<div class="btnrow"><button class="btn p" type="submit">立项进工作区</button><button class="btn" type="button" id="pjncancel">算了</button></div></form></div>';
+    const paintStaged = () => {
+      document.getElementById('pjnstaged').innerHTML = pjNew.paths.map((p, i) =>
+        '<div class="t"><img src="' + L.img(p) + '" alt=""><div class="m"><button class="btn sm d" type="button" data-stagedel=' + i + '>×</button></div></div>').join('');
+      document.querySelectorAll('[data-stagedel]').forEach((b) => b.addEventListener('click', () => { pjNew.paths.splice(Number(b.getAttribute('data-stagedel')), 1); paintStaged(); }));
+    };
+    document.getElementById('pjun').addEventListener('change', async (e) => {
+      for (const file of Array.from(e.target.files || [])) {
+        const fd = new FormData(); fd.append('file', file);
+        try { const up = await api.form('/api/admin/upload', fd); pjNew.paths.push(up.path); paintStaged(); }
+        catch (err) { L.toast(file.name + '：' + err.message); }
+      }
+      e.target.value = '';
+    });
+    document.getElementById('pjncancel').addEventListener('click', () => { wrap.innerHTML = ''; });
+    document.getElementById('pjnf').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const f = e.target;
+      const title = f.elements.title.value.trim();
+      if (!title) { L.toast('给项目起个标题'); return; }
+      try {
+        const p = await api.post('/api/admin/projects', { title: title, brief: f.elements.brief.value.trim(), images: pjNew.paths });
+        L.toast('立项成功');
+        location.hash = '#/project?id=' + num(p.id);
+      } catch (err) { L.toast(err.message); }
+    });
+  }
+
+  /* ---------------- 项目工作区（详情） ---------------- */
+  const pr = { pid: 0, fPrompt: '', renderer: 'hyperframes', galleryOpen: false, gallery: [] };
+  async function vProject() {
+    const id = Number(hashParam('id')) || 0;
+    if (!id) { location.hash = '#/projects'; return; }
+    const switching = id !== pr.pid;
+    if (switching) { pr.pid = id; pr.fPrompt = ''; pr.galleryOpen = false; pr.gallery = []; }
+    shell('projects', load('正在读工作区…'));
+    // shell 重绘了 panel，把导航高亮交给 projects；下面直接填内容。
+    await renderProjectDetail(false);
+  }
+  async function renderProjectDetail(silent) {
+    const panel = document.getElementById('panel');
+    if (!panel) return;
+    if (!silent) panel.innerHTML = load('正在读工作区…');
+    let d;
+    try { d = await api.get('/api/admin/projects/' + pr.pid); }
+    catch (e) { panel.innerHTML = errBox(e); return; }
+    const p = d.project || {}, assets = d.assets || [], steps = (d.steps || []).slice().reverse();
+    const hasSb = steps.some((s) => s.kind === 'storyboard' && s.status === 'done');
+    let body = '<div class="box"><h4>项目 · #' + num(p.id) + '<span class="pill ' + (p.status === 'open' ? 'run' : p.status === 'done' ? 'ok' : '') + '" style="margin-left:8px">' + esc(PROJ_ST[p.status] || p.status) + '</span></h4>' +
+      '<div class="adm-form">' + inp('标题', 'prtitle', p.title) + ta('制片提示词', 'prbrief', p.brief, 3) +
+      '<div class="btnrow"><button class="btn p" type="button" id="prsave">保存说明</button>' +
+      sel('状态', 'prstatus', p.status, Object.keys(PROJ_ST).map((k) => [k, PROJ_ST[k]])) +
+      '<button class="btn" type="button" id="prsave2">只改状态</button>' +
+      '<button class="btn d" type="button" id="prdel">删项目</button>' +
+      '<a class="btn" href="#/projects">← 回列表</a></div></div></div>';
+
+    // 素材区
+    body += '<div class="box" style="margin-top:11px"><h4>素材 ' + num(assets.length) + ' 个</h4>' +
+      (assets.length ? '<div class="thumbs">' + assets.map((a) =>
+        '<div class="t">' + (a.kind === 'image' ? '<img src="' + L.img(a.path) + '" alt="" loading="lazy">' : '<div class="hint" style="margin:0">📄 ' + esc(a.path.split('/').pop()) + '</div>') +
+        '<div class="m"><span class="nowrap">' + stamp(a.created_at) + '</span><button class="btn sm d" type="button" data-adel=' + num(a.id) + '>×</button></div></div>').join('') + '</div>'
+        : '<div class="hint">还没素材。人物镜头会自带辣条妹定妆图，这里传的是菜品/店铺参考图。</div>') +
+      '<div class="btnrow" style="margin-top:8px"><input type="file" id="prup" accept="image/*" multiple>' +
+      '<button class="btn" type="button" id="prgal">从图库挑</button></div>' +
+      '<div id="prgalwrap">' + (pr.galleryOpen ? galleryHTML() : '') + '</div></div>';
+
+    // 跑一步控制区
+    body += '<div class="box" style="margin-top:11px"><h4>跑一步（附加指令可空，写完分镜再跑下一步）</h4>' +
+      '<div class="adm-form">' + inp('本轮附加指令（如：开场改锅铲特写）', 'prprompt', pr.fPrompt) +
+      '<div class="row">' + sel('出片引擎', 'prrenderer', pr.renderer, [['hyperframes', 'hyperframes · 图文卡+旁白'], ['openmontage', 'openmontage · 纯动态剪辑']]) + '</div>' +
+      '<div class="btnrow">' +
+      '<button class="btn p" type="button" data-run="storyboard">① 出分镜</button>' +
+      '<button class="btn p" type="button" data-run="video"' + (hasSb ? '' : ' disabled title="先跑一步出分镜"') + '>② 出成片</button>' +
+      '<button class="btn p" type="button" data-run="copy">③ 出平台文案</button></div>' +
+      '<div class="hint">跑完自动刷新（15s 轮询）；产物照旧只进「待放行」，放行才发。</div></div></div>';
+
+    // 步骤时间线
+    body += '<div class="box" style="margin-top:11px"><h4>步骤留痕（新在前，跑坏重跑不丢历史）</h4><div class="tl">' +
+      (steps.length ? steps.map(stepHTML).join('') : '<div class="hint">还没跑过任何步骤。</div>') + '</div></div>';
+    panel.innerHTML = body;
+    bindProject(p, steps);
+
+    const busy = steps.some((s) => s.status === 'pending' || s.status === 'running');
+    if (busy) scheduleOps(() => { if (location.hash.indexOf('#/project') === 0) renderProjectDetail(true); }, 15000);
+  }
+
+  function galleryHTML() {
+    if (!pr.gallery.length) return '<div class="hint">图库是空的。</div>';
+    return '<div class="thumbs" style="max-height:260px;overflow:auto">' + pr.gallery.map((u) =>
+      '<div class="t"><img src="' + L.img(u.thumb || u.path) + '" alt="" loading="lazy">' +
+      '<div class="m"><button class="btn sm" type="button" data-gal="' + esc(u.path) + '">挂进来</button></div></div>').join('') + '</div>';
+  }
+
+  function stepHTML(s) {
+    let r = null;
+    try { r = JSON.parse(s.result || 'null'); } catch (e) { r = null; }
+    const video = r && r.video ? r.video : '';
+    const scenes = r && r.scenes ? r.scenes.length : 0;
+    const items = r && r.items ? r.items : (r && r.item_id ? [r.item_id] : []);
+    let acts = '<button class="btn sm" type="button" data-retry=' + num(s.id) + '>重跑这步</button>';
+    if (s.kind === 'storyboard' && s.status === 'done' && s.result) {
+      acts += ' <button class="btn sm" type="button" data-sbtoggle=' + num(s.id) + '>查看/改分镜</button>' +
+        ' <button class="btn sm a" type="button" data-sbvideo=' + num(s.id) + '>用这版出成片</button>';
+    }
+    let detail = '';
+    if (s.status === 'failed' && s.error) detail += '<div class="hint" style="color:var(--red)">✗ ' + esc(s.error) + '</div>';
+    if (s.note) detail += '<div class="hint">' + esc(s.note) + '</div>';
+    if (scenes) detail += '<span class="pill">' + num(scenes) + ' 镜</span>';
+    if (r && r.engine) detail += ' <span class="pill">' + esc(r.engine) + '</span>';
+    if (items.length) detail += ' <span class="pill ok">待放行 ' + num(items.length) + ' 条</span> <a class="btn sm" href="#/release">去放行</a>';
+    if (video) detail += '<div style="margin-top:8px"><video class="pre" src="' + L.img(video) + '" controls preload="metadata"></video>' +
+      '<div class="btnrow"><a class="btn sm" href="' + esc(video) + '?dl=1" download>下载源文件</a>' +
+      '<button class="btn sm" type="button" data-copyurl="' + esc(location.origin + video + '?dl=1') + '">复制下载链</button></div></div>';
+    let sbEdit = '';
+    if (s.kind === 'storyboard' && s.status === 'done' && s.result) {
+      let pretty = s.result;
+      try { pretty = JSON.stringify(JSON.parse(s.result), null, 1); } catch (e) { /* 原样 */ }
+      sbEdit = '<div id="sb' + num(s.id) + '" hidden style="margin-top:8px"><textarea id="sbt' + num(s.id) + '" rows="12" style="width:100%;border:2.5px solid var(--line);border-radius:10px;padding:8px;font-size:12px">' + esc(pretty) + '</textarea>' +
+        '<div class="btnrow"><button class="btn sm p" type="button" data-sbsave=' + num(s.id) + '>保存分镜</button>' +
+        '<button class="btn sm a" type="button" data-sbsavevideo=' + num(s.id) + '>保存并用这版出成片</button></div></div>';
+    }
+    return '<div class="tl-item"><div class="hd"><b class="t">' + esc(s.kind_label || s.kind) + '</b>' + tsPill(s.status) +
+      '<span class="hint" style="margin:0">' + stamp(s.created_at) + (s.finished_at ? ' → ' + stamp(s.finished_at) : '') + ' · ' + esc(s.created_by) + '</span></div>' +
+      (s.prompt ? '<div class="hint">追加指令：' + esc(s.prompt) + '</div>' : '') +
+      (detail ? '<div style="margin-top:6px">' + detail + '</div>' : '') +
+      '<div class="act">' + acts + '</div>' + sbEdit + '</div>';
+  }
+
+  function bindProject(p, steps) {
+    const panel = document.getElementById('panel');
+    const el = (id) => document.getElementById(id);
+    const promptEl = el('prprompt'), rendEl = el('prrenderer');
+    if (promptEl) promptEl.addEventListener('input', () => { pr.fPrompt = promptEl.value; });
+    if (rendEl) rendEl.addEventListener('change', () => { pr.renderer = rendEl.value; });
+    el('prsave').addEventListener('click', async () => {
+      try {
+        await api.put('/api/admin/projects/' + pr.pid, { title: promptTrim('prtitle'), brief: el('prbrief').value });
+        L.toast('已保存'); renderProjectDetail(true);
+      } catch (e) { L.toast(e.message); }
+    });
+    el('prsave2').addEventListener('click', async () => {
+      try { await api.put('/api/admin/projects/' + pr.pid, { status: el('prstatus').value }); L.toast('状态已更新'); renderProjectDetail(true); }
+      catch (e) { L.toast(e.message); }
+    });
+    el('prdel').addEventListener('click', async () => {
+      if (!confirm('删项目？步骤记录一起删（素材库原图不删）。')) return;
+      try { await api.del('/api/admin/projects/' + pr.pid); L.toast('删掉了'); location.hash = '#/projects'; }
+      catch (e) { L.toast(e.message); }
+    });
+    el('prup').addEventListener('change', async (e) => {
+      for (const file of Array.from(e.target.files || [])) {
+        const fd = new FormData(); fd.append('file', file);
+        try {
+          const up = await api.form('/api/admin/upload', fd);
+          await api.post('/api/admin/projects/' + pr.pid + '/assets', { path: up.path, kind: 'image' });
+        } catch (err) { L.toast(file.name + '：' + err.message); }
+      }
+      e.target.value = ''; L.toast('素材已加进项目'); renderProjectDetail(true);
+    });
+    el('prgal').addEventListener('click', async () => {
+      pr.galleryOpen = !pr.galleryOpen;
+      if (pr.galleryOpen && !pr.gallery.length) {
+        try { const d = await api.get('/api/admin/uploads?size=200'); pr.gallery = d.items || []; } catch (e) { pr.gallery = []; }
+      }
+      el('prgalwrap').innerHTML = pr.galleryOpen ? galleryHTML() : '';
+      bindGallery();
+    });
+    bindGallery();
+    panel.querySelectorAll('[data-adel]').forEach((b) => b.addEventListener('click', async () => {
+      if (!confirm('从项目移除这个素材？（素材库原图不删）')) return;
+      try { await api.del('/api/admin/projects/' + pr.pid + '/assets/' + b.getAttribute('data-adel')); renderProjectDetail(true); }
+      catch (e) { L.toast(e.message); }
+    }));
+    panel.querySelectorAll('[data-run]').forEach((b) => b.addEventListener('click', () => runStep(b.getAttribute('data-run'), 0)));
+    panel.querySelectorAll('[data-sbvideo]').forEach((b) => b.addEventListener('click', () => runStep('video', Number(b.getAttribute('data-sbvideo')))));
+    panel.querySelectorAll('[data-sbtoggle]').forEach((b) => b.addEventListener('click', () => {
+      const box = document.getElementById('sb' + b.getAttribute('data-sbtoggle'));
+      if (box) box.hidden = !box.hidden;
+    }));
+    panel.querySelectorAll('[data-sbsave]').forEach((b) => b.addEventListener('click', () => saveStoryboard(Number(b.getAttribute('data-sbsave')), false)));
+    panel.querySelectorAll('[data-sbsavevideo]').forEach((b) => b.addEventListener('click', () => saveStoryboard(Number(b.getAttribute('data-sbsavevideo')), true)));
+    panel.querySelectorAll('[data-retry]').forEach((b) => b.addEventListener('click', async () => {
+      try { await api.post('/api/admin/project-steps/' + b.getAttribute('data-retry') + '/retry', {}); L.toast('已重跑，历史保留'); renderProjectDetail(true); }
+      catch (e) { L.toast(e.message); }
+    }));
+    panel.querySelectorAll('[data-copyurl]').forEach((b) => b.addEventListener('click', async () => {
+      const u = b.getAttribute('data-copyurl');
+      try { await navigator.clipboard.writeText(u); L.toast('下载链已复制，手机浏览器粘贴即下'); } catch (e) { L.toast(u); }
+    }));
+  }
+  const promptTrim = (id) => { const x = document.getElementById(id); return x ? x.value.trim() : ''; };
+  function bindGallery() {
+    document.querySelectorAll('[data-gal]').forEach((b) => b.addEventListener('click', async () => {
+      try {
+        await api.post('/api/admin/projects/' + pr.pid + '/assets', { path: b.getAttribute('data-gal'), kind: 'image' });
+        L.toast('已挂进项目'); renderProjectDetail(true);
+      } catch (e) { L.toast(e.message); }
+    }));
+  }
+  async function saveStoryboard(stepId, thenVideo) {
+    const ta = document.getElementById('sbt' + stepId);
+    if (!ta) return;
+    let v;
+    try { v = JSON.parse(ta.value); } catch (e) { L.toast('JSON 不合法，别改坏了——改坏了就重出一版'); return; }
+    try {
+      await api.post('/api/admin/project-steps/' + stepId + '/save', { result: JSON.stringify(v) });
+      if (thenVideo) await runStep('video', stepId);
+      else { L.toast('分镜已保存，出成片时选「用这版」'); renderProjectDetail(true); }
+    } catch (e) { L.toast(e.message); }
+  }
+  async function runStep(kind, sbStepId) {
+    const body = { kind: kind };
+    if (pr.fPrompt.trim()) body.prompt = pr.fPrompt.trim();
+    if (kind === 'video') { body.renderer = pr.renderer; if (sbStepId) body.storyboard_step_id = sbStepId; }
+    try {
+      const r = await api.post('/api/admin/projects/' + pr.pid + '/steps', body);
+      L.toast(({ storyboard: '出分镜', video: '出成片（渲染要几分钟，挂着就行）', copy: '出平台文案' })[kind] + '已开工 #' + num(r.step_id));
+      pr.fPrompt = ''; renderProjectDetail(true);
+    } catch (e) { L.toast(e.message); }
+  }
+
+  const SO_ST = { pending: ['待审', 'wait'], approved: ['已放行', 'run'], published: ['已发布', 'ok'], rejected: ['已驳回', 'no'], failed: ['发布失败', 'no'] };
+  const socPill = (st) => { const x = SO_ST[st] || [st, '']; return '<span class="pill ' + x[1] + '">' + esc(x[0]) + '</span>'; };
+
+  /* ---------------- 待放行（social_items 人审闸门） ---------------- */
+  const sof = { status: 'pending', platform: '' };
+  async function vRelease() {
+    shell('release', load('正在读待放行…'));
+    const panel = document.getElementById('panel');
+    try {
+      const d = await api.get('/api/admin/social-items?status=' + sof.status + '&platform=' + sof.platform + '&limit=60');
+      const items = d.items || [], sum = d.summary || {};
+      const chips = ['pending', 'approved', 'rejected', 'published', 'failed'].map((k) =>
+        '<span>' + ({ pending: '待审', approved: '已放行', rejected: '已驳回', published: '已发布', failed: '发布失败' })[k] + ' ' + num(sum[k]) + '</span>').join('');
+      const cards = items.map((it) => {
+        const tags = jarr(it.tags).map((t) => '<span>#' + esc(t) + '</span>').join('');
+        const imgs = jarr(it.images).map((p) => '<div class="t"><img src="' + L.img(p) + '" alt="" loading="lazy"></div>').join('');
+        let acts = '';
+        if (it.status === 'pending' || it.status === 'approved') {
+          acts += '<button class="btn sm" type="button" data-edit=' + num(it.id) + '>改稿</button>';
+        }
+        if (it.status === 'pending' || it.status === 'rejected') {
+          acts += '<button class="btn sm p" type="button" data-appr=' + num(it.id) + '>✔ 放行</button>';
+        }
+        if (it.status === 'pending' || it.status === 'approved') {
+          acts += '<button class="btn sm d" type="button" data-rej=' + num(it.id) + '>驳回</button>';
+        }
+        return '<div class="tl-item" id="si' + num(it.id) + '"><div class="hd"><span class="pill">' + esc(it.platform_label || PLAT_LABEL[it.platform] || it.platform) + '</span>' +
+          '<b class="t">' + esc(it.title || '(无标题)') + '</b>' + socPill(it.status) +
+          '<span class="hint" style="margin:0">' + stamp(it.created_at) + (it.review_dish ? ' · 出自「' + esc(it.review_dish) + '」' : '') + '</span></div>' +
+          '<div class="sbody" data-body=' + num(it.id) + '>' + esc(it.body) + '</div>' +
+          (tags ? '<div class="tagrow">' + tags + '</div>' : '') +
+          (imgs ? '<div class="thumbs" style="margin-top:6px">' + imgs + '</div>' : '') +
+          (it.video ? '<video class="pre" src="' + L.img(it.video) + '" controls preload="metadata"></video>' : '') +
+          (it.note ? '<div class="hint">备注：' + esc(it.note) + '</div>' : '') +
+          (it.result ? '<div class="hint">结果：' + esc(String(it.result)).slice(0, 200) + '</div>' : '') +
+          '<div class="act">' + acts + '</div>' +
+          '<div class="siedit" id="sie' + num(it.id) + '" hidden><div class="adm-form">' + inp('标题', 'sititle', it.title) + ta('正文', 'sibody', it.body, 6) + inp('话题（逗号分隔）', 'sitags', jarr(it.tags).join(',')) +
+          '<div class="btnrow"><button class="btn sm p" type="button" data-sisave=' + num(it.id) + '>存稿</button><button class="btn sm" type="button" data-sicancel=' + num(it.id) + '>取消</button></div></div></div></div>';
+      }).join('');
+      panel.innerHTML = '<div class="box"><h4>待放行 · 人审闸门（铁律：只有这里放行才会发布）</h4>' +
+        '<div class="sumchips">' + chips + '</div>' +
+        '<div class="btnrow">' +
+        sel('状态', 'sost', sof.status, [['pending', '待审'], ['approved', '已放行'], ['published', '已发布'], ['rejected', '已驳回'], ['failed', '发布失败'], ['all', '全部']]) +
+        sel('平台', 'sopl', sof.platform, [['', '全部平台']].concat(PLAT_OPTS)) +
+        '<button class="btn" type="button" id="sogo">筛</button></div></div>' +
+        '<div class="tl" style="margin-top:11px">' + (cards || '<div class="hint">这个筛法下没有稿子。</div>') + '</div>';
+      document.getElementById('sogo').addEventListener('click', () => { sof.status = document.getElementById('sost').value; sof.platform = document.getElementById('sopl').value; vRelease(); });
+      panel.querySelectorAll('[data-edit]').forEach((b) => b.addEventListener('click', () => {
+        const box = document.getElementById('sie' + b.getAttribute('data-edit'));
+        if (box) box.hidden = false;
+      }));
+      panel.querySelectorAll('[data-sicancel]').forEach((b) => b.addEventListener('click', () => {
+        const box = document.getElementById('sie' + b.getAttribute('data-sicancel'));
+        if (box) box.hidden = true;
+      }));
+      panel.querySelectorAll('[data-sisave]').forEach((b) => b.addEventListener('click', async () => {
+        const id = b.getAttribute('data-sisave');
+        const box = document.getElementById('sie' + id);
+        const tags = box.querySelector('[name=sitags]').value.split(/[,，\s]+/).filter(Boolean);
+        try {
+          await api.post('/api/admin/social-items/' + id + '/save', { title: box.querySelector('[name=sititle]').value.trim(), body: box.querySelector('[name=sibody]').value, tags: tags });
+          L.toast('存好了'); vRelease();
+        } catch (e) { L.toast(e.message); }
+      }));
+      panel.querySelectorAll('[data-appr]').forEach((b) => b.addEventListener('click', async () => {
+        if (!confirm('放行后会自动入队发布到对应平台，确定？')) return;
+        try { await api.post('/api/admin/social-items/' + b.getAttribute('data-appr') + '/approve', {}); L.toast('已放行，发布任务已入队（去「任务」盯进度）'); vRelease(); }
+        catch (e) { L.toast(e.message); }
+      }));
+      panel.querySelectorAll('[data-rej]').forEach((b) => b.addEventListener('click', async () => {
+        const note = prompt('驳回理由（可空，会连带撤掉未跑的发布任务）：') || '';
+        try { await api.post('/api/admin/social-items/' + b.getAttribute('data-rej') + '/reject', { note: note }); L.toast('已驳回'); vRelease(); }
+        catch (e) { L.toast(e.message); }
+      }));
+      const busy = items.some((it) => it.status === 'pending');
+      if (busy) scheduleOps(() => { if (location.hash.indexOf('#/release') === 0) vRelease(); }, 30000);
+    } catch (e) { panel.innerHTML = errBox(e); }
+  }
+
+  /* ---------------- 任务队列 ---------------- */
+  const ttf = { status: 'pending', type: '' };
+  async function vTasks() {
+    shell('tasks', load('正在读任务队列…'));
+    const panel = document.getElementById('panel');
+    try {
+      const d = await api.get('/api/admin/tasks?status=' + ttf.status + '&type=' + ttf.type + '&limit=100');
+      const tasks = d.tasks || [], sum = d.summary || {};
+      if (!d.pipeline_on) {
+        panel.innerHTML = '<div class="box"><b style="color:var(--red)">流水线没开：服务端没配 LATIAOMEI_PIPELINE_TOKEN，worker 进不来。</b><div class="hint">见 deploy/latiaomei.env.example。</div></div>'; return;
+      }
+      const rows = tasks.map((t) => '<tr><td>#' + num(t.id) + '</td>' +
+        '<td>' + esc(t.type_label || t.type) + (t.project_id ? '<div class="hint" style="margin:0">项目 #' + num(t.project_id) + '</div>' : (t.review_dish ? '<div class="hint" style="margin:0">「' + esc(t.review_dish) + '」</div>' : '')) + '</td>' +
+        '<td>' + tsPill(t.status) + '</td>' +
+        '<td class="hide-sm">' + num(t.attempts) + '</td>' +
+        '<td class="hide-sm" title="' + esc(String(t.error || t.result || '')) + '">' + esc(String(t.error || t.result || '').slice(0, 60)) + '</td>' +
+        '<td class="hide-sm">' + stamp(t.created_at) + '</td>' +
+        '<td><div class="btnrow">' +
+        (t.status === 'failed' ? '<button class="btn sm" type="button" data-tretry=' + num(t.id) + '>重跑</button>' : '') +
+        (t.status === 'pending' || t.status === 'running' || t.status === 'failed' ? '<button class="btn sm d" type="button" data-tskip=' + num(t.id) + '>跳过</button>' : '') +
+        '</div></td></tr>').join('');
+      panel.innerHTML = '<div class="box"><h4>任务队列 · worker 消费端在服务器上跑</h4>' +
+        '<div class="sumchips">' + Object.keys(sum).map((k) => '<span>' + esc(k) + ' ' + num(sum[k]) + '</span>').join('') + '</div>' +
+        '<div class="btnrow">' +
+        sel('状态', 'ttst', ttf.status, [['pending', '排队中'], ['running', '执行中'], ['done', '已完成'], ['failed', '失败'], ['skipped', '已跳过'], ['all', '全部']]) +
+        '<button class="btn" type="button" id="ttgo">筛</button>' +
+        '<button class="btn a" type="button" id="ttenq">+ 手动补发一单</button></div></div>' +
+        '<div class="box" style="margin-top:11px"><h4>' + num(tasks.length) + ' 条</h4>' +
+        '<table class="adm-t"><thead><tr><th>#</th><th>类型</th><th>状态</th><th class="hide-sm">重试</th><th class="hide-sm">结果/错误</th><th class="hide-sm">时间</th><th>操作</th></tr></thead>' +
+        '<tbody>' + (rows || '<tr><td colspan="7">空</td></tr>') + '</tbody></table></div>' +
+        '<div id="ttenqwrap" style="margin-top:11px"></div>';
+      document.getElementById('ttgo').addEventListener('click', () => { ttf.status = document.getElementById('ttst').value; vTasks(); });
+      panel.querySelectorAll('[data-tretry]').forEach((b) => b.addEventListener('click', async () => {
+        try { await api.post('/api/admin/tasks/' + b.getAttribute('data-tretry') + '/retry', {}); L.toast('已重新排队'); vTasks(); }
+        catch (e) { L.toast(e.message); }
+      }));
+      panel.querySelectorAll('[data-tskip]').forEach((b) => b.addEventListener('click', async () => {
+        if (!confirm('跳过这个任务？')) return;
+        try { await api.post('/api/admin/tasks/' + b.getAttribute('data-tskip') + '/skip', {}); L.toast('已跳过'); vTasks(); }
+        catch (e) { L.toast(e.message); }
+      }));
+      document.getElementById('ttenq').addEventListener('click', () => {
+        document.getElementById('ttenqwrap').innerHTML = '<div class="box"><h4>手动补发（四平台发布类必须走「待放行」，这里只能补基础任务）</h4>' +
+          '<div class="adm-form"><div class="row">' +
+          sel('类型', 'entype', 'gzh', [['draft', 'AI 产草稿'], ['gzh', '公众号同步'], ['wxpush', '订阅消息推送'], ['video', '视频渲染']]) +
+          inp('点评 ID（草稿可填 0）', 'enrid', '0', 'type="number"') +
+          '</div><div class="btnrow"><button class="btn p" type="button" id="ensub">入队</button></div></div></div>';
+        document.getElementById('ensub').addEventListener('click', async () => {
+          try {
+            const r = await api.post('/api/admin/tasks', { type: document.getElementById('entype').value, review_id: Number(document.getElementById('enrid').value) || 0 });
+            L.toast(r.added ? '已入队' : '同类型未终结任务已存在，没重复加');
+            vTasks();
+          } catch (e) { L.toast(e.message); }
+        });
+      });
+      const busy = tasks.some((t) => t.status === 'pending' || t.status === 'running');
+      if (busy) scheduleOps(() => { if (location.hash.indexOf('#/tasks') === 0) vTasks(); }, 15000);
+    } catch (e) { panel.innerHTML = errBox(e); }
+  }
+
+  /* ---------------- 指令与发任务（指挥中心） ---------------- */
+  const cmf = { status: 'open', dKinds: [['topic', '点菜'], ['style', '口径'], ['promo', '推广'], ['block', '禁做']] };
+  async function vCmd() {
+    shell('cmd', load('正在读指令…'));
+    const panel = document.getElementById('panel');
+    try {
+      const [d, rv] = await Promise.all([
+        api.get('/api/admin/directives?status=' + cmf.status),
+        api.get('/api/admin/reviews?status=published&page=1&size=100'),
+      ]);
+      const dirs = d.directives || [];
+      const KIND_TEXT = { topic: '点菜', style: '口径', promo: '推广', block: '禁做' };
+      const rows = dirs.map((x) => '<div class="tl-item"><div class="hd"><span class="pill">' + esc(KIND_TEXT[x.kind] || x.kind) + '</span><b class="t">' + esc(x.title) + '</b>' +
+        '<span class="pill ' + (x.status === 'open' ? 'run' : x.status === 'done' ? 'ok' : 'no') + '">' + esc(({ open: '进行中', done: '已办', cancelled: '已取消' })[x.status] || x.status) + '</span>' +
+        '<span class="hint" style="margin:0">' + esc(x.date || '') + ' · ' + esc(x.created_by) + '</span></div>' +
+        (x.brief ? '<div class="hint">' + esc(x.brief) + '</div>' : '') +
+        (x.result_note ? '<div class="hint">回话：' + esc(x.result_note) + '</div>' : '') +
+        '<div class="act">' +
+        (x.status === 'open' ? '<button class="btn sm p" type="button" data-done=' + num(x.id) + '>办完</button><button class="btn sm" type="button" data-cancel=' + num(x.id) + '>取消</button>' : '<button class="btn sm" type="button" data-reopen=' + num(x.id) + '>重新开</button>') +
+        '<button class="btn sm d" type="button" data-ddel=' + num(x.id) + '>删</button></div></div>').join('');
+      const rvOpts = (rv.items || []).map((x) => '<option value="' + num(x.id) + '">' + esc(x.dish) + '</option>').join('');
+      panel.innerHTML =
+        '<div class="box"><h4>指令台账 · 辣条妹发号施令的地方</h4>' +
+        '<div class="btnrow">' + sel('状态', 'dmst', cmf.status, [['open', '进行中'], ['done', '已办'], ['cancelled', '已取消'], ['all', '全部']]) + '<button class="btn" type="button" id="dmggo">筛</button></div></div>' +
+        '<div class="box" style="margin-top:11px"><h4>下新指令</h4><div class="adm-form"><div class="row">' +
+        sel('类型', 'dkind', 'topic', cmf.dKinds) + inp('标题 *', 'dtitle', '') + '</div>' +
+        ta('具体内容（可空）', 'dbrief', '', 2) +
+        '<div class="btnrow"><button class="btn p" type="button" id="dadd">记下</button></div></div></div>' +
+        '<div class="tl" style="margin-top:11px">' + (rows || '<div class="hint">没有指令。</div>') + '</div>' +
+        '<div class="box" style="margin-top:11px"><h4>发分发任务（一条已发布内容 → 四平台备稿）</h4><div class="adm-form">' +
+        '<label>选内容<select id="misrvid">' + rvOpts + '</select></label>' +
+        '<label>平台<div class="tagrow">' + PLAT_OPTS.map((o) => '<label style="display:flex;gap:4px;align-items:center"><input type="checkbox" value="' + o[0] + '" checked>' + o[1] + '</label>').join('') + '</div></label>' +
+        inp('备注（可空）', 'misnote', '') +
+        '<div class="btnrow"><button class="btn p" type="button" id="missub">发任务</button><span class="hint" style="margin:0">产完稿进「待放行」，不会直接发</span></div></div></div>';
+      document.getElementById('dmggo').addEventListener('click', () => { cmf.status = document.getElementById('dmst').value; vCmd(); });
+      document.getElementById('dadd').addEventListener('click', async () => {
+        const title = document.querySelector('[name=dtitle]').value.trim();
+        if (!title) { L.toast('指令得有个标题'); return; }
+        try {
+          await api.post('/api/admin/directives', { title: title, brief: document.querySelector('[name=dbrief]').value.trim(), kind: document.querySelector('[name=dkind]').value });
+          L.toast('已记下'); vCmd();
+        } catch (e) { L.toast(e.message); }
+      });
+      panel.querySelectorAll('[data-done]').forEach((b) => b.addEventListener('click', async () => {
+        const note = prompt('办完回话（可空）：') || '';
+        try { await api.post('/api/admin/directives/' + b.getAttribute('data-done') + '/status', { status: 'done', note: note }); vCmd(); }
+        catch (e) { L.toast(e.message); }
+      }));
+      panel.querySelectorAll('[data-cancel]').forEach((b) => b.addEventListener('click', async () => {
+        try { await api.post('/api/admin/directives/' + b.getAttribute('data-cancel') + '/status', { status: 'cancelled', note: '' }); vCmd(); }
+        catch (e) { L.toast(e.message); }
+      }));
+      panel.querySelectorAll('[data-reopen]').forEach((b) => b.addEventListener('click', async () => {
+        try { await api.post('/api/admin/directives/' + b.getAttribute('data-reopen') + '/status', { status: 'open', note: '' }); vCmd(); }
+        catch (e) { L.toast(e.message); }
+      }));
+      panel.querySelectorAll('[data-ddel]').forEach((b) => b.addEventListener('click', async () => {
+        if (!confirm('删这条指令？')) return;
+        try { await api.del('/api/admin/directives/' + b.getAttribute('data-ddel')); vCmd(); }
+        catch (e) { L.toast(e.message); }
+      }));
+      document.getElementById('missub').addEventListener('click', async () => {
+        const plats = Array.from(panel.querySelectorAll('.tagrow input[type=checkbox]:checked')).map((x) => x.value);
+        const rid = Number(document.getElementById('misrvid').value) || 0;
+        if (!plats.length) { L.toast('至少选一个平台'); return; }
+        try {
+          const r = await api.post('/api/admin/missions', { review_id: rid, platforms: plats, note: document.querySelector('[name=misnote]').value.trim() });
+          L.toast(r.added ? '任务已入队，文案好了去「待放行」看' : '同内容已有未终结的生成任务，没重复加');
+        } catch (e) { L.toast(e.message); }
+      });
+    } catch (e) { panel.innerHTML = errBox(e); }
+  }
+
   /* ---------------- 路由 ---------------- */
-  const VIEWS = { overview: vOverview, reviews: vReviews, shops: vShops, tastes: vTastes, settings: vSettings, uploads: vUploads, maint: vMaint };
+  const VIEWS = { overview: vOverview, projects: vProjects, project: vProject, release: vRelease, tasks: vTasks, cmd: vCmd, reviews: vReviews, shops: vShops, tastes: vTastes, settings: vSettings, uploads: vUploads, maint: vMaint };
   function render() {
     if (!csrf) { loginView(''); return; }
+    stopOpsPoll();
     const name = (location.hash.replace(/^#\/?/, '') || 'overview').split('?')[0];
     const fn = VIEWS[name] || VIEWS.overview;
     fn().catch((e) => {

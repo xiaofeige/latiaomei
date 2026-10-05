@@ -2,7 +2,12 @@
 
 AI 驱动的分发流水线：**辣条妹只出现在两处——下指令、审内容**，其余由本 worker 自动完成。
 后端任务队列在 Go 服务里（`/api/pipeline/*`，见 `src/server/internal/httpapi/pipeline.go`），
-本目录只是消费端。管理入口是后台小程序「指挥中心」页（`miniapps/admin-wechat`）。
+本目录只是消费端。干活入口有两个，状态同源（都在 sqlite），随时接力：
+
+- 手机：后台小程序「指挥中心/工作台」页（`miniapps/admin-wechat`）；
+- 电脑：Web 干活台（`web/js/admin/admin.js`，部署后开 `https://latiaomei.infinityfly.xin/latiaomei/`）：
+  「项目」建项/加素材/跑步骤/改分镜/看成片，「待放行」改稿与放行，「任务」盯队列重跑，
+  「指令」下指令与发分发任务。在手机上立项后电脑上接着改分镜、渲染出片后在电脑浏览器里直接看片放行，不用来回切设备。
 
 ```
 辣条妹下指令(directive)/发任务(mission)              点评发布(人工审核放行)
