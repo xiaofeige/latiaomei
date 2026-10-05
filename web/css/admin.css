@@ -1,0 +1,91 @@
+/* =============================================================
+   admin.css —— 后台专属皮肤 v15：左侧菜单 + 视频工坊工作区。
+   叠加在 main.css 之上（只给 /latiaomei/ 后台页引用）。
+   颜色一律用 main.css 的 :root 变量，别写死。
+   ============================================================= */
+
+/* ---------- 顶栏：矮一点，右侧放用户操作 ---------- */
+.adm-top{position:sticky;top:0;z-index:60;background:#111;color:#fff;display:flex;align-items:center;gap:11px;padding:9px 16px;border-bottom:4px solid var(--latiao)}
+.adm-top .mt{width:30px}
+.adm-top .brand b{font-size:15px;font-weight:900;display:block;line-height:1.2}
+.adm-top .brand small{font-size:9px;color:#9a9aa4;font-weight:800;letter-spacing:1.6px}
+.adm-top .sp{margin-left:auto;display:flex;gap:7px;align-items:center}
+.adm-top .who{font-size:11.5px;font-weight:900;color:var(--acid);border:2px solid #3a3a42;border-radius:9px;padding:3px 9px}
+
+/* ---------- 骨架：左侧菜单 + 右侧内容（宽度随视口铺满，不设上限） ---------- */
+.adm-shell{display:grid;grid-template-columns:clamp(208px,15vw,300px) minmax(0,1fr);gap:clamp(14px,1.6vw,28px);max-width:none;margin:0 auto;padding:16px clamp(16px,2.4vw,56px) 56px;align-items:start}
+.adm-side{position:sticky;top:74px;display:flex;flex-direction:column;gap:1px;background:#fff;border:var(--hair) solid var(--line);border-radius:16px;padding:10px 9px 12px;box-shadow:var(--shadow-s);max-height:calc(100vh - 96px);overflow:auto;scrollbar-width:thin}
+.adm-side .grp{font-size:9.5px;font-weight:900;letter-spacing:2px;color:var(--muted);margin:12px 8px 3px}
+.adm-side .grp:first-child{margin-top:2px}
+.adm-side button.nav{display:flex;align-items:center;gap:9px;text-align:left;width:100%;font-size:clamp(12.5px,1vw,14.5px);font-weight:900;padding:9px 11px;border-radius:11px;border:2.5px solid transparent;background:transparent;color:var(--ink);transition:background .12s,transform .12s}
+.adm-side button.nav i{font-style:normal;font-size:15px;width:19px;text-align:center;flex-shrink:0}
+.adm-side button.nav:hover{background:#fff1dd}
+.adm-side button.nav:active{transform:translate(1px,1px)}
+.adm-side button.nav.on{background:var(--acid);border-color:var(--line);box-shadow:2.5px 2.5px 0 rgba(0,0,0,.18)}
+.adm-side button.nav .bdg{margin-left:auto;font-size:10px;font-weight:900;background:var(--latiao);color:#fff;border:2px solid var(--line);border-radius:999px;padding:0 7px;min-width:14px;text-align:center}
+.adm-side .side-foot{margin-top:14px;padding-top:10px;border-top:2px dashed #e7ddc8;display:grid;gap:6px}
+.adm-side .side-foot a,.adm-side .side-foot button{font-size:12px;font-weight:900;color:var(--muted);text-align:left;padding:5px 10px;border-radius:9px}
+.adm-side .side-foot a:hover,.adm-side .side-foot button:hover{color:var(--ink);background:#fff1dd}
+.adm-main{min-width:0}
+.adm-main .panel{margin-top:0}
+
+/* ---------- 面板细节：给 box 标题加橙色标尺 ---------- */
+.adm-main .box h4{display:flex;align-items:center;gap:8px;color:var(--ink);font-size:13px;letter-spacing:.6px}
+.adm-main .box h4::before{content:"";width:6px;height:17px;flex-shrink:0;background:var(--latiao);border:2px solid var(--line);border-radius:3px}
+.adm-main table.adm-t th{position:sticky;top:0;background:#fff;z-index:1}
+
+/* ---------- 页面小标题（工坊/列表页头部） ---------- */
+.pghead{display:flex;align-items:center;gap:12px;flex-wrap:wrap;background:#fff;border:var(--hair) solid var(--line);border-radius:16px;padding:13px 15px;box-shadow:var(--shadow-s);margin-bottom:12px}
+.pghead h3{font-size:16px;font-weight:900}
+.pghead .sub{font-size:11px;font-weight:800;color:var(--muted);flex:1;min-width:180px}
+.pghead .chips{display:flex;gap:6px;flex-wrap:wrap}
+.pghead .chips span{font-size:11px;font-weight:900;border:2px solid var(--line);border-radius:9px;padding:3px 9px;background:var(--paper)}
+
+/* ---------- 项目卡片列表：列数随视口自动增列，宽屏铺满 ---------- */
+.pjlist{display:grid;grid-template-columns:repeat(auto-fill,minmax(clamp(260px,22vw,360px),1fr));gap:clamp(12px,1.3vw,20px)}
+.pjcard{display:flex;flex-direction:column;gap:7px;background:#fff;border:var(--hair) solid var(--line);border-radius:16px;padding:12px 13px;box-shadow:var(--shadow-s);cursor:pointer;transition:transform .13s,box-shadow .13s;text-align:left}
+.pjcard:hover{transform:translate(-2px,-3px);box-shadow:7px 8px 0 rgba(0,0,0,.16)}
+.pjcard .r1{display:flex;align-items:center;gap:8px}
+.pjcard .r1 b{font-size:14px;font-weight:900;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pjcard .brief{font-size:11.5px;font-weight:700;color:var(--muted);line-height:1.55;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-height:2.2em}
+.pjcard .r3{display:flex;gap:6px;flex-wrap:wrap;align-items:center;font-size:10.5px;font-weight:900;color:var(--muted)}
+.pjcard .r3 .dot{width:4px;height:4px;border-radius:50%;background:#d8cfc0}
+.pjcard .r4{display:flex;gap:6px;margin-top:2px}
+.st-open{background:#D6EBFF}.st-review{background:#FFF3C4}.st-done{background:var(--acid)}.st-archived{background:#eee;color:#777}
+.pjcard .pill{border-width:2px}
+
+/* ---------- 工坊工作区：网格区域式布局 ----------
+   900–1559px：左（说明/素材/跑一步竖排）+ 右（时间线）两栏；
+   ≥1560px（2K/4K）：说明｜素材+跑一步｜时间线 三栏，横向铺满；
+   <900px：单列堆叠。 */
+.wsgrid{display:grid;gap:clamp(12px,1.4vw,22px);align-items:start;grid-template-columns:minmax(0,5fr) minmax(0,6fr);grid-template-areas:"a d" "b d" "c d"}
+.ws-a{grid-area:a}.ws-b{grid-area:b}.ws-c{grid-area:c}.ws-d{grid-area:d;min-width:0}
+@media(min-width:1560px){
+  .wsgrid{grid-template-columns:minmax(0,3.6fr) minmax(0,4.4fr) minmax(0,6fr);grid-template-areas:"a b d" "a c d"}
+}
+.ws-hero{background:#fff;border:var(--hair) solid var(--line);border-radius:16px;padding:13px 14px;box-shadow:var(--shadow-s)}
+.ws-hero .top{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+.ws-hero .top b{font-size:16px;font-weight:900}
+.ws-hero .meta{font-size:10.5px;font-weight:800;color:var(--muted);margin-top:4px}
+.ws-hero .sync{display:inline-flex;align-items:center;gap:5px;margin-top:8px;font-size:10.5px;font-weight:900;color:#0a7a3d;background:#e6f7ec;border:2px solid #0a7a3d;border-radius:9px;padding:2px 8px}
+.upzone{border:2.5px dashed var(--line);border-radius:12px;background:#fffdf5;padding:10px 12px;font-size:12px;font-weight:800;color:var(--muted);display:flex;gap:9px;align-items:center;flex-wrap:wrap}
+.upzone input[type=file]{font-size:12px;font-weight:700;max-width:220px}
+
+/* ---------- 通用面板在宽屏里跟着铺开：表格字号、缩略图列数随视口走 ---------- */
+.adm-main .thumbs{grid-template-columns:repeat(auto-fill,minmax(clamp(104px,9vw,150px),1fr))}
+.adm-main .grid.c4{grid-template-columns:repeat(auto-fit,minmax(clamp(150px,12vw,220px),1fr))}
+.adm-main .grid.c3{grid-template-columns:repeat(auto-fit,minmax(clamp(190px,15vw,260px),1fr))}
+.adm-main .grid.c2{grid-template-columns:repeat(auto-fit,minmax(clamp(250px,20vw,360px),1fr))}
+
+/* ---------- 移动端：侧栏折成顶部横滑条 ---------- */
+@media(max-width:899px){
+  .adm-shell{grid-template-columns:1fr;gap:10px;padding:10px 12px 44px}
+  .adm-side{position:static;flex-direction:row;overflow-x:auto;gap:6px;padding:8px;max-height:none;scrollbar-width:none}
+  .adm-side::-webkit-scrollbar{display:none}
+  .adm-side .grp,.adm-side .side-foot{display:none}
+  .adm-side button.nav{width:auto;white-space:nowrap;border:2.5px solid var(--line);border-radius:11px;padding:6px 11px;font-size:12.5px}
+  .adm-side button.nav .bdg{margin-left:4px}
+  .wsgrid{grid-template-columns:1fr;grid-template-areas:"a" "b" "c" "d"}
+  .pghead{padding:11px 12px}
+  .pghead h3{font-size:14.5px}
+}

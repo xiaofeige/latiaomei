@@ -1,9 +1,11 @@
 /* =============================================================
-   admin.js —— 后台。hash 路由：#/overview #/projects #/project?id=N #/release
-   #/tasks #/cmd #/reviews #/shops #/tastes #/settings #/uploads #/maint。
-   所有写操作都会带上 CSRF 头。
-   v14 干活台：项目/待放行/任务/指令 与管理小程序「工作台」同源同接口，
-   状态全在服务端 sqlite —— 手机建项目、电脑出成片，两边接力互不等待。
+   admin.js —— 后台。左侧菜单，hash 路由：#/overview #/video（视频工坊，
+   #/video?id=N 进工作区）#/release #/tasks #/cmd #/reviews #/shops #/tastes
+   #/settings #/uploads #/maint。所有写操作都带 CSRF 头。
+   v14 干活台：项目/待放行/任务/指令 与管理小程序同源同接口，状态全在服务端。
+   v15 皮肤：菜单挪到左侧栏；「视频工坊」独立成一级菜单，列表用卡片，
+   工作区双栏（左：说明/素材/跑一步，右：步骤时间线）。手机和电脑操作同一
+   个项目工作区：往里加图片素材、改提示词、分步跑，两边接力互不等待。
    ============================================================= */
 (function () {
   'use strict';
@@ -124,26 +126,60 @@
     });
   }
 
-  /* ---------------- 骨架 ---------------- */
-  const NAV = [['overview', '概览'], ['projects', '项目'], ['release', '待放行'], ['tasks', '任务'],
-    ['cmd', '指令'], ['reviews', '点评'], ['shops', '店铺'], ['tastes', '标签'],
-    ['settings', '站点配置'], ['uploads', '图库'], ['maint', '维护']];
+  /* ---------------- 骨架：左侧菜单 ---------------- */
+  const NAV_GROUPS = [
+    ['看数据', [['overview', '📈', '概览']]],
+    ['视频内容', [['video', '🎬', '视频工坊'], ['release', '🚦', '待放行'],
+      ['tasks', '🛠', '任务队列'], ['cmd', '📣', '指令台账']]],
+    ['内容管理', [['reviews', '🌶', '点评'], ['shops', '🏪', '店铺'],
+      ['tastes', '🏷', '标签'], ['uploads', '🖼', '图库']]],
+    ['站点', [['settings', '⚙', '站点配置'], ['maint', '🧹', '维护']]],
+  ];
+  function sideHTML(active) {
+    return NAV_GROUPS.map((g) =>
+      '<div class="grp">' + g[0] + '</div>' + g[1].map((n) =>
+        '<button type="button" class="nav' + (n[0] === active ? ' on' : '') + '" data-nav="' + n[0] + '">' +
+        '<i>' + n[1] + '</i>' + n[2] + '<span class="bdg" data-bdg="' + n[0] + '" hidden></span></button>').join('')).join('') +
+      '<div class="side-foot"><a href="/" target="_blank" rel="noopener">↗ 看前台站点</a>' +
+      '<button type="button" data-logout>⏻ 退出登录</button></div>';
+  }
   function shell(active, body) {
     root.innerHTML = '<div class="adm-top"><div class="mt">' + L.mascot({ mouth: 'open' }) + '</div>' +
-      '<div><b>辣条妹 · 后台</b><small>LATIAOMEI ADMIN</small></div>' +
-      '<div class="sp"><span class="hint hide-sm" style="margin:0">' + esc(me) + '</span>' +
+      '<div class="brand"><b>辣条妹 · 管理台</b><small>LATIAOMEI CONSOLE</small></div>' +
+      '<div class="sp"><span class="who">' + esc(me) + '</span>' +
       '<a class="btn sm" href="/" target="_blank" rel="noopener">看前台</a>' +
-      '<button class="btn sm d" id="logout" type="button">退出</button></div></div>' +
-      '<div class="adm"><div class="adm-nav">' + NAV.map((n) =>
-        '<button type="button" data-nav="' + n[0] + '" class="' + (n[0] === active ? 'on' : '') + '">' + n[1] + '</button>').join('') +
-      '</div><div class="panel" id="panel">' + body + '</div></div>';
+      '<button class="btn sm d" type="button" data-logout>退出</button></div></div>' +
+      '<div class="adm-shell"><aside class="adm-side">' + sideHTML(active) + '</aside>' +
+      '<main class="adm-main"><div class="panel" id="panel">' + body + '</div></main></div>';
     root.querySelectorAll('[data-nav]').forEach((b) => b.addEventListener('click', () => { location.hash = '#/' + b.getAttribute('data-nav'); }));
-    document.getElementById('logout').addEventListener('click', async () => {
+    root.querySelectorAll('[data-logout]').forEach((b) => b.addEventListener('click', async () => {
       try { await api.post('/api/admin/logout'); } catch (e) { /* 退出失败也要回登录页 */ }
       csrf = ''; me = '';
       L.toast('已退出');
       loginView('');
-    });
+    }));
+    refreshBadges();
+  }
+  // 侧栏角标：待放行 / 排队任务 / 进行中项目，进页面时刷一次即可。
+  function setBdg(key, v) {
+    const el = root.querySelector('[data-bdg="' + key + '"]');
+    if (!el) return;
+    v = num(v);
+    if (v > 0) { el.textContent = v > 99 ? '99+' : String(v); el.hidden = false; } else { el.hidden = true; }
+  }
+  async function refreshBadges() {
+    try {
+      const [rel, tk, pj] = await Promise.all([
+        api.get('/api/admin/social-items?status=pending&limit=1'),
+        api.get('/api/admin/tasks?status=pending&limit=1'),
+        api.get('/api/admin/projects?status=open&limit=200'),
+      ]);
+      const s = rel.summary || {};
+      setBdg('release', num(s.pending));
+      const t = tk.summary || {};
+      setBdg('tasks', num(t.pending) + num(t.running));
+      setBdg('video', (pj.projects || []).length);
+    } catch (e) { /* 角标拉不到不碍事 */ }
   }
 
   /* ---------------- 概览 ---------------- */
@@ -193,7 +229,7 @@
         statCard('合计', bsize(s.total_bytes), s.db_err ? '读库有错' : '健康') + '</div></div></div>';
 
     body += '<div class="btnrow" style="margin-top:12px">' +
-      '<button class="btn p" type="button" data-nav="projects">去项目干活</button>' +
+      '<button class="btn p" type="button" data-nav="video">去视频工坊</button>' +
       '<button class="btn" type="button" data-nav="release">待放行</button>' +
       '<button class="btn" type="button" data-nav="tasks">任务队列</button>' +
       '<a class="btn" href="/api/admin/export">导出内容 JSON</a>' +
@@ -724,49 +760,62 @@
   const jarr = (v) => Array.isArray(v) ? v : (typeof v === 'string' ? (JSON.parse(v || '[]') || []) : []);
   const tsPill = (st) => '<span class="pill ' + (st === 'done' ? 'ok' : st === 'failed' ? 'no' : st === 'running' ? 'run' : st === 'pending' ? 'wait' : '') + '">' + esc(TS_LABEL[st] || st) + '</span>';
 
-  /* ---------------- 项目列表 ---------------- */
+  /* ---------------- 视频工坊：项目工作区列表 ---------------- */
   const pjf = { status: 'open' };
-  async function vProjects() {
-    shell('projects', load('正在读项目…'));
+  async function vVideo() {
+    shell('video', load('正在读项目…'));
     const panel = document.getElementById('panel');
     try {
       const d = await api.get('/api/admin/projects?status=' + pjf.status + '&limit=100');
       const list = d.projects || [];
-      const rows = list.map((p) => {
-        const last = p.last_step_kind ? esc(p.last_step_label || p.last_step_kind) + ' · ' + esc(TS_LABEL[p.last_step_status] || p.last_step_status) : '还没开跑';
-        return '<tr><td><b>' + esc(p.title) + '</b><div class="hint" style="margin:0">' + esc(p.created_by) + ' · ' + stamp(p.created_at) + '</div></td>' +
-          '<td><span class="pill ' + (p.status === 'open' ? 'run' : p.status === 'review' ? 'wait' : p.status === 'done' ? 'ok' : '') + '">' + esc(PROJ_ST[p.status] || p.status) + '</span></td>' +
-          '<td>' + num(p.asset_count) + ' 素材</td><td>' + num(p.step_count) + ' 步</td>' +
-          '<td class="hide-sm">' + last + '</td>' +
-          '<td><div class="btnrow"><a class="btn sm p" href="#/project?id=' + num(p.id) + '">进工作区</a>' +
-          (p.status === 'archived' ? '<button class="btn sm" type="button" data-unarch=' + num(p.id) + '>恢复</button>' : '<button class="btn sm" type="button" data-arch=' + num(p.id) + '>归档</button>') +
-          '<button class="btn sm d" type="button" data-pdel=' + num(p.id) + '>删</button></div></td></tr>';
+      const cards = list.map((p) => {
+        const last = p.last_step_kind
+          ? esc(p.last_step_label || p.last_step_kind) + ' · ' + esc(TS_LABEL[p.last_step_status] || p.last_step_status)
+          : '还没开跑';
+        return '<div class="pjcard" data-open=' + num(p.id) + '>' +
+          '<div class="r1"><b>' + esc(p.title) + '</b><span class="pill st-' + esc(p.status) + '">' + esc(PROJ_ST[p.status] || p.status) + '</span></div>' +
+          '<div class="brief">' + (p.brief ? esc(p.brief) : '<i>（还没写制片提示词，进工作区补）</i>') + '</div>' +
+          '<div class="r3"><span>🖼 ' + num(p.asset_count) + ' 素材</span><span class="dot"></span>' +
+          '<span>👣 ' + num(p.step_count) + ' 步</span><span class="dot"></span><span>' + last + '</span></div>' +
+          '<div class="r3">立项：' + esc(p.created_by || '—') + ' · ' + stamp(p.created_at) + '</div>' +
+          '<div class="r4">' +
+            '<button class="btn sm p" type="button" data-open=' + num(p.id) + '>进工作区 →</button>' +
+            (p.status === 'archived'
+              ? '<button class="btn sm" type="button" data-unarch=' + num(p.id) + '>恢复</button>'
+              : '<button class="btn sm" type="button" data-arch=' + num(p.id) + '>归档</button>') +
+            '<button class="btn sm d" type="button" data-pdel=' + num(p.id) + '>删</button>' +
+          '</div></div>';
       }).join('');
       panel.innerHTML =
-        '<div class="box"><h4>项目工作区 · 手机小程序同一套状态</h4>' +
-        '<div class="hint">一条视频/一组文案 = 一个项目：出分镜 → 改分镜 → 出成片 → 出平台文案 → 待放行。在手机上开的项目这里接着跑，反之亦然。</div>' +
-        '<div class="btnrow" style="margin-top:8px">' +
+        '<div class="pghead"><h3>🎬 视频工坊</h3>' +
+        '<div class="sub">一条视频 / 一组平台文案 = 一个项目工作区：往里加图片素材 → 出分镜 → 改分镜 → 出成片 → 出文案 → 待放行。' +
+        '和管理小程序是<b>同一个工作区</b>——手机立项，这里点开接着跑；这里加的图，手机上也立刻看得到。</div>' +
         sel('状态', 'pjs', pjf.status, [['open', '进行中'], ['review', '等放行'], ['done', '已交付'], ['archived', '已归档'], ['all', '全部']]) +
         '<button class="btn" type="button" id="pjgo">筛</button>' +
-        '<button class="btn a" type="button" id="pjnew">+ 新立项</button></div></div>' +
-        '<div class="box" style="margin-top:11px"><h4>共 ' + num(list.length) + ' 个</h4>' +
-        '<table class="adm-t"><thead><tr><th>项目</th><th>状态</th><th>素材</th><th>步骤</th><th class="hide-sm">最近一步</th><th>操作</th></tr></thead>' +
-        '<tbody>' + (rows || '<tr><td colspan="6">还没有项目，点「新立项」或去小程序开一个</td></tr>') + '</tbody></table></div>' +
-        '<div id="pjnewwrap" style="margin-top:11px"></div>';
-      document.getElementById('pjgo').addEventListener('click', () => { pjf.status = document.getElementById('pjs').value; vProjects(); });
+        '<button class="btn a" type="button" id="pjnew">＋ 新立项</button></div>' +
+        '<div class="pjlist">' + (cards || '<div class="box"><div class="hint" style="margin:0">这个筛法下还没有项目。点「新立项」开一个，或去手机上的管理小程序里开。</div></div>') + '</div>' +
+        '<div id="pjnewwrap" style="margin-top:12px"></div>';
+      document.getElementById('pjgo').addEventListener('click', () => { pjf.status = document.getElementById('pjs').value; vVideo(); });
       document.getElementById('pjnew').addEventListener('click', () => showProjectNew());
-      panel.querySelectorAll('[data-arch]').forEach((b) => b.addEventListener('click', async () => {
-        try { await api.put('/api/admin/projects/' + b.getAttribute('data-arch'), { status: 'archived' }); L.toast('已归档'); vProjects(); }
-        catch (e) { L.toast(e.message); }
+      panel.querySelectorAll('[data-open]').forEach((b) => b.addEventListener('click', (e) => {
+        e.stopPropagation();
+        location.hash = '#/video?id=' + b.getAttribute('data-open');
       }));
-      panel.querySelectorAll('[data-unarch]').forEach((b) => b.addEventListener('click', async () => {
-        try { await api.put('/api/admin/projects/' + b.getAttribute('data-unarch'), { status: 'open' }); L.toast('已恢复'); vProjects(); }
-        catch (e) { L.toast(e.message); }
+      panel.querySelectorAll('[data-arch]').forEach((b) => b.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        try { await api.put('/api/admin/projects/' + b.getAttribute('data-arch'), { status: 'archived' }); L.toast('已归档'); vVideo(); }
+        catch (err) { L.toast(err.message); }
       }));
-      panel.querySelectorAll('[data-pdel]').forEach((b) => b.addEventListener('click', async () => {
+      panel.querySelectorAll('[data-unarch]').forEach((b) => b.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        try { await api.put('/api/admin/projects/' + b.getAttribute('data-unarch'), { status: 'open' }); L.toast('已恢复'); vVideo(); }
+        catch (err) { L.toast(err.message); }
+      }));
+      panel.querySelectorAll('[data-pdel]').forEach((b) => b.addEventListener('click', async (e) => {
+        e.stopPropagation();
         if (!confirm('删项目会连带删它的步骤记录（素材库原图不删），确定？')) return;
-        try { await api.del('/api/admin/projects/' + b.getAttribute('data-pdel')); L.toast('删掉了'); vProjects(); }
-        catch (e) { L.toast(e.message); }
+        try { await api.del('/api/admin/projects/' + b.getAttribute('data-pdel')); L.toast('删掉了'); vVideo(); }
+        catch (err) { L.toast(err.message); }
       }));
     } catch (e) { panel.innerHTML = errBox(e); }
   }
@@ -775,7 +824,9 @@
   function showProjectNew() {
     pjNew.paths = [];
     const wrap = document.getElementById('pjnewwrap');
-    wrap.innerHTML = '<div class="box"><h4>新立项</h4><form class="adm-form" id="pjnf">' +
+    wrap.innerHTML = '<div class="box"><h4>新立项 · 开一个视频内容工作区</h4>' +
+      '<div class="hint" style="margin:0 0 8px">立项后进的是和手机小程序同一个工作区：哪边建的都行，另一边接着加图、改提示词、跑步骤。</div>' +
+      '<form class="adm-form" id="pjnf">' +
       inp('标题 *', 'title', '') +
       ta('制片提示词（想要什么片子、重点、口吻…可先空着到工作区再补）', 'brief', '', 4) +
       '<label>首批素材（可多选，传完点「立项」一起带进项目）<input type="file" id="pjun" accept="image/*" multiple></label>' +
@@ -803,20 +854,20 @@
       try {
         const p = await api.post('/api/admin/projects', { title: title, brief: f.elements.brief.value.trim(), images: pjNew.paths });
         L.toast('立项成功');
-        location.hash = '#/project?id=' + num(p.id);
+        location.hash = '#/video?id=' + num(p.id);
       } catch (err) { L.toast(err.message); }
     });
   }
 
-  /* ---------------- 项目工作区（详情） ---------------- */
+  /* ---------------- 视频工坊：单项目工作区（双栏） ---------------- */
   const pr = { pid: 0, fPrompt: '', renderer: 'hyperframes', galleryOpen: false, gallery: [] };
   async function vProject() {
     const id = Number(hashParam('id')) || 0;
-    if (!id) { location.hash = '#/projects'; return; }
+    if (!id) { location.hash = '#/video'; return; }
     const switching = id !== pr.pid;
     if (switching) { pr.pid = id; pr.fPrompt = ''; pr.galleryOpen = false; pr.gallery = []; }
-    shell('projects', load('正在读工作区…'));
-    // shell 重绘了 panel，把导航高亮交给 projects；下面直接填内容。
+    shell('video', load('正在读工作区…'));
+    // shell 重绘了 panel 与侧栏（工坊列表/工作区共用「视频工坊」菜单项）。
     await renderProjectDetail(false);
   }
   async function renderProjectDetail(silent) {
@@ -828,26 +879,34 @@
     catch (e) { panel.innerHTML = errBox(e); return; }
     const p = d.project || {}, assets = d.assets || [], steps = (d.steps || []).slice().reverse();
     const hasSb = steps.some((s) => s.kind === 'storyboard' && s.status === 'done');
-    let body = '<div class="box"><h4>项目 · #' + num(p.id) + '<span class="pill ' + (p.status === 'open' ? 'run' : p.status === 'done' ? 'ok' : '') + '" style="margin-left:8px">' + esc(PROJ_ST[p.status] || p.status) + '</span></h4>' +
-      '<div class="adm-form">' + inp('标题', 'prtitle', p.title) + ta('制片提示词', 'prbrief', p.brief, 3) +
-      '<div class="btnrow"><button class="btn p" type="button" id="prsave">保存说明</button>' +
-      sel('状态', 'prstatus', p.status, Object.keys(PROJ_ST).map((k) => [k, PROJ_ST[k]])) +
-      '<button class="btn" type="button" id="prsave2">只改状态</button>' +
-      '<button class="btn d" type="button" id="prdel">删项目</button>' +
-      '<a class="btn" href="#/projects">← 回列表</a></div></div></div>';
 
-    // 素材区
-    body += '<div class="box" style="margin-top:11px"><h4>素材 ' + num(assets.length) + ' 个</h4>' +
+    // 页头：标题 + 状态 + 双端同步提示
+    const head = '<div class="pghead">' +
+      '<a class="btn sm" href="#/video">← 工坊列表</a>' +
+      '<h3>🎬 ' + esc(p.title) + '</h3>' +
+      '<span class="pill st-' + esc(p.status || 'open') + '">' + esc(PROJ_ST[p.status] || p.status) + '</span>' +
+      '<span style="font-size:10.5px;font-weight:900;color:#0a7a3d;background:#e6f7ec;border:2px solid #0a7a3d;border-radius:9px;padding:2px 8px">🔗 与小程序同一工作区，双端随时接力</span>' +
+      '<div class="sub">#' + num(p.id) + ' · 立项：' + esc(p.created_by || '—') + ' · ' + stamp(p.created_at) + '</div></div>';
+
+    // 工作区四块：a=说明 b=素材(加图加内容) c=跑一步 d=时间线；列数由 .wsgrid 网格区域随屏幕宽度自适应。
+    let left = '<div class="box ws-a"><h4>项目说明</h4><div class="adm-form">' +
+      inp('标题', 'prtitle', p.title) +
+      ta('制片提示词（想要什么片子、重点、口吻…写完保存再跑）', 'prbrief', p.brief, 4) +
+      '<div class="btnrow"><button class="btn p sm" type="button" id="prsave">保存说明</button>' +
+      sel('状态', 'prstatus', p.status, Object.keys(PROJ_ST).map((k) => [k, PROJ_ST[k]])) +
+      '<button class="btn sm" type="button" id="prsave2">只改状态</button>' +
+      '<button class="btn sm d" type="button" id="prdel">删项目</button></div></div></div>';
+
+    left += '<div class="box ws-b"><h4>素材 ' + num(assets.length) + ' 个 · 往里加图片就是加内容</h4>' +
       (assets.length ? '<div class="thumbs">' + assets.map((a) =>
         '<div class="t">' + (a.kind === 'image' ? '<img src="' + L.img(a.path) + '" alt="" loading="lazy">' : '<div class="hint" style="margin:0">📄 ' + esc(a.path.split('/').pop()) + '</div>') +
         '<div class="m"><span class="nowrap">' + stamp(a.created_at) + '</span><button class="btn sm d" type="button" data-adel=' + num(a.id) + '>×</button></div></div>').join('') + '</div>'
-        : '<div class="hint">还没素材。人物镜头会自带辣条妹定妆图，这里传的是菜品/店铺参考图。</div>') +
-      '<div class="btnrow" style="margin-top:8px"><input type="file" id="prup" accept="image/*" multiple>' +
-      '<button class="btn" type="button" id="prgal">从图库挑</button></div>' +
+        : '<div class="hint">还没有素材。传菜品/店铺参考图，出分镜时按上传顺序用图；人物镜头会自动挂辣条妹定妆图。</div>') +
+      '<div class="upzone" style="margin-top:9px"><input type="file" id="prup" accept="image/*" multiple><span>选图直接传进项目</span>' +
+      '<button class="btn sm" type="button" id="prgal">' + (pr.galleryOpen ? '收起图库' : '从图库挑') + '</button></div>' +
       '<div id="prgalwrap">' + (pr.galleryOpen ? galleryHTML() : '') + '</div></div>';
 
-    // 跑一步控制区
-    body += '<div class="box" style="margin-top:11px"><h4>跑一步（附加指令可空，写完分镜再跑下一步）</h4>' +
+    left += '<div class="box ws-c"><h4>跑一步（附加指令可空，写完分镜再跑下一步）</h4>' +
       '<div class="adm-form">' + inp('本轮附加指令（如：开场改锅铲特写）', 'prprompt', pr.fPrompt) +
       '<div class="row">' + sel('出片引擎', 'prrenderer', pr.renderer, [['hyperframes', 'hyperframes · 图文卡+旁白'], ['openmontage', 'openmontage · 纯动态剪辑']]) + '</div>' +
       '<div class="btnrow">' +
@@ -856,14 +915,14 @@
       '<button class="btn p" type="button" data-run="copy">③ 出平台文案</button></div>' +
       '<div class="hint">跑完自动刷新（15s 轮询）；产物照旧只进「待放行」，放行才发。</div></div></div>';
 
-    // 步骤时间线
-    body += '<div class="box" style="margin-top:11px"><h4>步骤留痕（新在前，跑坏重跑不丢历史）</h4><div class="tl">' +
-      (steps.length ? steps.map(stepHTML).join('') : '<div class="hint">还没跑过任何步骤。</div>') + '</div></div>';
-    panel.innerHTML = body;
+    const right = '<div class="box ws-d"><h4>步骤留痕（新在前，跑坏重跑不丢历史）</h4><div class="tl">' +
+      (steps.length ? steps.map(stepHTML).join('') : '<div class="hint">还没跑过任何步骤。左边加好素材和提示词，回这边点「① 出分镜」开第一步。</div>') + '</div></div>';
+
+    panel.innerHTML = head + '<div class="wsgrid">' + left + right + '</div>';
     bindProject(p, steps);
 
     const busy = steps.some((s) => s.status === 'pending' || s.status === 'running');
-    if (busy) scheduleOps(() => { if (location.hash.indexOf('#/project') === 0) renderProjectDetail(true); }, 15000);
+    if (busy) scheduleOps(() => { if (location.hash.indexOf('#/video') === 0) renderProjectDetail(true); }, 15000);
   }
 
   function galleryHTML() {
@@ -926,7 +985,7 @@
     });
     el('prdel').addEventListener('click', async () => {
       if (!confirm('删项目？步骤记录一起删（素材库原图不删）。')) return;
-      try { await api.del('/api/admin/projects/' + pr.pid); L.toast('删掉了'); location.hash = '#/projects'; }
+      try { await api.del('/api/admin/projects/' + pr.pid); L.toast('删掉了'); location.hash = '#/video'; }
       catch (e) { L.toast(e.message); }
     });
     el('prup').addEventListener('change', async (e) => {
@@ -1214,11 +1273,19 @@
   }
 
   /* ---------------- 路由 ---------------- */
-  const VIEWS = { overview: vOverview, projects: vProjects, project: vProject, release: vRelease, tasks: vTasks, cmd: vCmd, reviews: vReviews, shops: vShops, tastes: vTastes, settings: vSettings, uploads: vUploads, maint: vMaint };
+  function vVideoRoute() { return hashParam('id') ? vProject() : vVideo(); }
+  const VIEWS = { overview: vOverview, video: vVideoRoute, release: vRelease, tasks: vTasks, cmd: vCmd, reviews: vReviews, shops: vShops, tastes: vTastes, settings: vSettings, uploads: vUploads, maint: vMaint };
   function render() {
     if (!csrf) { loginView(''); return; }
     stopOpsPoll();
-    const name = (location.hash.replace(/^#\/?/, '') || 'overview').split('?')[0];
+    const raw = location.hash.replace(/^#\/?/, '') || 'overview';
+    const name = raw.split('?')[0];
+    if (name === 'projects' || name === 'project') {
+      // v15 起工坊统一走 #/video（老链子自动搬，带 id 就直进工作区）
+      const q = raw.indexOf('?') >= 0 ? raw.slice(raw.indexOf('?')) : '';
+      location.hash = '#/video' + q;
+      return;
+    }
     const fn = VIEWS[name] || VIEWS.overview;
     fn().catch((e) => {
       shell(name, errBox(e));
