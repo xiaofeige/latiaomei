@@ -1,0 +1,67 @@
+/* 榜单管理组件。行高固定（拖拽按行步长算位移），内容一律单行省略。
+ * 高度由宿主页面通过 --ra-h 传入（Tab2 里要扣掉分段条），默认 100vh。 */
+.ra { display: flex; flex-direction: column; height: var(--ra-h, 100vh); background: var(--bg, #f4f1ea); }
+
+.ra-top { padding: 16rpx 24rpx 10rpx; }
+
+.ra-tools { display: flex; align-items: center; }
+.ra-search { flex: 1; display: flex; align-items: center; min-width: 0; position: relative; }
+.ra-search-i {
+  flex: 1; background: #fff; border: 1rpx solid var(--line, #e6ded0); border-radius: var(--radius-ctl, 14rpx);
+  padding: 0 56rpx 0 24rpx; font-size: 28rpx; height: 80rpx; line-height: 1.4; min-height: 80rpx;
+}
+.ra-ph { color: #a39b8b; }
+.ra-clear { position: absolute; right: 8rpx; top: 50%; transform: translateY(-50%); padding: 12rpx 16rpx; color: #8a8478; font-size: 26rpx; }
+.ra-tool {
+  flex-shrink: 0; margin-left: 12rpx; font-size: 26rpx; color: #6b6156; background: #fff;
+  border: 1rpx solid var(--line, #e6ded0); border-radius: var(--radius-ctl, 14rpx); padding: 20rpx 26rpx; min-height: 80rpx;
+  display: flex; align-items: center;
+}
+.ra-tool.on { background: #1a1a1a; color: #fff; border-color: #1a1a1a; }
+
+.ra-hint { margin-top: 12rpx; font-size: 22rpx; color: #8a8478; line-height: 1.5; }
+
+.ra-scroll { flex: 1; min-height: 0; padding: 0 24rpx; box-sizing: border-box; }
+
+.ra-row { display: flex; align-items: center; height: 116rpx; background: #fff; border-radius: 20rpx;
+  margin-bottom: 12rpx; padding: 0 16rpx; box-sizing: border-box; position: relative;
+  -webkit-user-select: none; user-select: none; }
+.ra-row.dragging { z-index: 5; box-shadow: 0 10rpx 32rpx rgba(0, 0, 0, 0.22); background: #fbf6ea; }
+
+/* 常规拖拽手柄：一直在每行最前面，按住它才能拖动排序（catch 在手柄上，不误伤列表滚动）。 */
+.ra-grip { flex-shrink: 0; width: 64rpx; align-self: stretch; display: flex; align-items: center;
+  justify-content: center; font-size: 36rpx; color: #b7ae9e; margin-right: 4rpx; }
+
+/* 名次牌：可点（动作面板：上移/下移/置首/改分），底色区分前三。 */
+.ra-rk { flex-shrink: 0; min-width: 56rpx; height: 56rpx; line-height: 56rpx; text-align: center;
+  border-radius: 14rpx; background: #efe9dc; color: #8a8478; font-size: 26rpx; font-weight: 700; margin-right: 14rpx;
+  padding: 0 6rpx; }
+.ra-rk.top { background: #b58f4a; color: #fff; }
+
+.ra-badge { flex-shrink: 0; max-width: 108rpx; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  color: #fff; font-size: 22rpx; font-weight: 700; border-radius: 10rpx; padding: 6rpx 12rpx; margin-right: 14rpx; }
+
+.ra-main { flex: 1; min-width: 0; }
+.ra-dish { font-size: 28rpx; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ra-sub { font-size: 22rpx; color: #8a8478; margin-top: 6rpx; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.ra-acts { flex-shrink: 0; display: flex; align-items: center; }
+.ra-act { font-size: 24rpx; color: #6b6156; background: #f2ede2; border-radius: 999rpx; padding: 14rpx 18rpx; margin-left: 10rpx; min-width: 44rpx; text-align: center; }
+.ra-act.del { color: #a0503c; }
+
+.ra-empty { text-align: center; color: #9a958c; font-size: 26rpx; padding: 80rpx 40rpx; line-height: 1.7; }
+.ra-loading { text-align: center; color: #9a958c; font-size: 24rpx; padding: 16rpx; }
+.ra-pad { height: 180rpx; }
+
+.ra-fab { position: fixed; right: 32rpx; bottom: calc(180rpx + env(safe-area-inset-bottom));
+  width: 104rpx; height: 104rpx; line-height: 100rpx; text-align: center; border-radius: 50%;
+  background: #b58f4a; color: #fff; font-size: 56rpx; box-shadow: 0 8rpx 24rpx rgba(181, 143, 74, 0.45); z-index: 20; }
+.ra-fab:active { transform: scale(0.94); }
+
+.ra-savebar { position: fixed; left: 0; right: 0; bottom: 0; display: flex; align-items: center;
+  background: #fff; border-top: 1rpx solid #e5ded0; padding: 18rpx 24rpx calc(18rpx + env(safe-area-inset-bottom)); z-index: 15; }
+.ra-save-tip { flex: 1; font-size: 24rpx; color: #8a8478; }
+.ra-save-tip.warn { color: #a0503c; }
+.ra-sbtn { font-size: 28rpx; color: #6b6156; padding: 18rpx 32rpx; margin-left: 16rpx; border: 1rpx solid #e5ded0; border-radius: 14rpx; }
+.ra-sbtn.primary { background: #b58f4a; color: #fff; border-color: #b58f4a; }
+.ra-sbtn.primary.dis { opacity: 0.45; }

@@ -1,0 +1,22 @@
+{
+  "appid": "wx0cc2fc9d18f315c1",
+  "projectname": "latiaomei-user",
+  "description": "辣条妹的御膳房 · 用户端小程序（内容沉淀 + 订阅推送）",
+  "miniprogramRoot": "miniprogram/",
+  "compileType": "miniprogram",
+  "libVersion": "3.5.5",
+  "setting": {
+    "urlCheck": false,
+    "es6": true,
+    "enhance": true,
+    "postcss": true,
+    "minified": true,
+    "bundle": false,
+    "useIsolateContext": true,
+    "coverView": true,
+    "nodeModules": false,
+    "checkInvalidKey": true,
+    "checkSiteMap": true,
+    "uploadWithSourceMap": true
+  }
+}

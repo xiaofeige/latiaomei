@@ -1,0 +1,103 @@
+/* 组件默认样式隔离，app.wxss 的 border-box 兜不进来，自己锁一道
+   （组件 wxss 禁 `*` 选择器，只能逐个元素声明） */
+.wheelbox, .wheel, .wdisc, .wc, .whub, .wres, .vc, .rw, .go, .wnone,
+.pop-mask, .pop-card, .pop-k, .pop-vw, .pop-dish, .pop-sub, .pop-btns,
+.pop-main, .pop-ghost { box-sizing: border-box; }
+.wheelbox { display: flex; flex-direction: column; align-items: center; width: 100%; }
+.wheel { position: relative; width: 440rpx; height: 440rpx; margin-top: 4rpx; }
+.wdisc { width: 100%; height: 100%; transform-origin: 50% 50%; }
+.wc { width: 100%; height: 100%; display: block; }
+
+/* 底部指针（尖朝上）：选中扇区停在盘面下方，字不至于整个倒过来 */
+.wptr {
+  position: absolute; left: 50%; bottom: -12rpx; transform: translateX(-50%); z-index: 3;
+  width: 0; height: 0; border-left: 16rpx solid transparent; border-right: 16rpx solid transparent;
+  border-bottom: 34rpx solid #ffc53d;
+}
+
+/* 中心「转」钮：全站唯一行动色辣油橙，白字黑环 */
+.whub {
+  position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); z-index: 4;
+  width: 120rpx; height: 120rpx; border-radius: 50%; box-sizing: border-box;
+  background: #ff5a1f; color: #fff; border: 6rpx solid #fffdf7;
+  box-shadow: 0 0 0 5rpx #111, 0 8rpx 20rpx rgba(17, 17, 17, .3);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 44rpx; font-weight: 900;
+}
+.whub.busy { animation: hubp .55s ease-in-out infinite; color: #fff; }
+.whub-press { transform: translate(-50%, -50%) scale(.9); background: #e64a12; color: #fff; }
+@keyframes hubp { 50% { transform: translate(-50%, -50%) scale(.9); background: #e64a12; } }
+
+/* 一字判决结果卡 */
+.wres {
+  display: flex; width: 88%; margin: 22rpx auto 0; text-align: left; align-items: center; gap: 14rpx;
+  background: #ffc53d; color: #111; border: 5rpx solid #111; border-radius: 20rpx; padding: 14rpx 16rpx;
+  box-shadow: 6rpx 6rpx 0 rgba(17, 17, 17, .22);
+  animation: pop .28s cubic-bezier(.2, 1.4, .4, 1);
+}
+.wres.bad { background: #141414; color: #fff; border-color: #d0452e; }
+.vc {
+  flex-shrink: 0; min-width: 64rpx; height: 64rpx; padding: 0 6rpx; box-sizing: border-box;
+  border: 5rpx solid #111; border-radius: 14rpx;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 900; font-size: 22rpx; line-height: 1.2;
+}
+.wres.bad .vc { border-color: #fff; }
+.rw { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.rw .l { font-size: 28rpx; font-weight: 900; line-height: 1.3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rw .s { font-size: 20rpx; font-weight: 800; opacity: .72; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.go {
+  flex-shrink: 0; font-size: 22rpx; font-weight: 900;
+  background: #ff5a1f; color: #fff; padding: 10rpx 20rpx; border-radius: 24rpx; white-space: nowrap;
+}
+.go-press { transform: scale(.94); opacity: .85; }
+.wres.bad .go { background: #ffc53d; color: #111; }
+@keyframes pop { from { transform: scale(.8); opacity: 0; } }
+
+.wnone { font-size: 24rpx; font-weight: 800; color: #8c8375; text-align: center; padding: 60rpx 12rpx; line-height: 1.7; }
+
+/* ---------------- 宣判弹窗 ----------------
+   动效动机：停稳 = 判决生效，卡片从顶部坠入定住，像被拍下来的宣判书；
+   遮罩淡入压暗全场，注意力只留在这张卡上 */
+.pop-mask {
+  position: fixed; left: 0; top: 0; right: 0; bottom: 0; z-index: 1000;
+  background: rgba(0, 0, 0, .72);
+  display: flex; align-items: center; justify-content: center;
+  animation: popMask .22s ease-out both;
+}
+@keyframes popMask { from { opacity: 0; } to { opacity: 1; } }
+
+.pop-card {
+  width: 580rpx; text-align: center; padding: 40rpx 36rpx 36rpx;
+  background: #ffc53d; color: #111; border: 6rpx solid #111; border-radius: 28rpx;
+  box-shadow: 14rpx 14rpx 0 rgba(17, 17, 17, .22), inset 0 0 0 4rpx rgba(255, 255, 255, .35);
+  animation: popCard .5s cubic-bezier(.2, 1.35, .35, 1) both;
+}
+@keyframes popCard {
+  from { transform: scale(.55) translateY(-90rpx) rotate(4deg); opacity: 0; }
+  to { transform: scale(1) translateY(0) rotate(-1deg); opacity: 1; }
+}
+.pop-card.bad { background: #141414; color: #fff; border-color: #d0452e; box-shadow: 14rpx 14rpx 0 rgba(208, 69, 46, .35); }
+
+.pop-k { font-size: 20rpx; font-weight: 900; letter-spacing: 6rpx; opacity: .66; }
+/* 大字判决：橙硬影是全站招牌；避雷档换砖红 */
+.pop-vw {
+  font-size: 96rpx; font-weight: 900; line-height: 1.05; letter-spacing: -4rpx;
+  margin: 8rpx 0 4rpx; text-shadow: 8rpx 8rpx 0 #ff5a1f;
+}
+.pop-card.bad .pop-vw { text-shadow: 8rpx 8rpx 0 #d0452e; color: #fff; }
+.pop-dish { font-size: 38rpx; font-weight: 900; letter-spacing: -1rpx; }
+.pop-sub { font-size: 22rpx; font-weight: 800; opacity: .68; margin-top: 8rpx; }
+
+.pop-btns { display: flex; flex-direction: column; gap: 16rpx; margin-top: 34rpx; }
+.pop-main {
+  background: #111; color: #ffc53d; font-size: 30rpx; font-weight: 900;
+  border-radius: 999rpx; padding: 20rpx 0; border: 5rpx solid #111;
+}
+.pop-card.bad .pop-main { background: #ffc53d; color: #111; border-color: #ffc53d; }
+.pop-ghost {
+  background: transparent; color: #111; font-size: 26rpx; font-weight: 900;
+  border: 5rpx solid #111; border-radius: 999rpx; padding: 14rpx 0;
+}
+.pop-card.bad .pop-ghost { color: #fff; border-color: #fff; }
+.pop-press { transform: scale(.96); opacity: .85; }

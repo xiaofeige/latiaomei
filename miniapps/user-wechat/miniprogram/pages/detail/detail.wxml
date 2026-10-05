@@ -1,0 +1,74 @@
+<view class="wrap" wx:if="{{rv}}">
+  <!-- 判决横幅：web 站 vcard 同款，一档一底色 + 巨型判决字 + 荧光粉硬影 -->
+  <view class="d-hero t-{{view.tier}} rise">
+    <view class="d-vh">
+      <view class="vc t-{{view.tier}}">{{view.tierLabel}}</view>
+      <text class="d-vk">辣条妹 · 一字判决</text>
+    </view>
+    <view class="d-vw">{{view.tierLabel}}<small>{{view.tierName}}</small></view>
+    <view class="d-pm" wx:if="{{view.cover}}">
+      <image class="d-cover" src="{{view.cover}}" mode="aspectFill" bindtap="preview" data-src="{{view.cover}}" />
+    </view>
+    <view class="d-vi">
+      <view class="d-dish">{{rv.dish}}</view>
+      <view class="d-head">「{{rv.headline}}」</view>
+      <view class="d-chips">
+        <text class="d-chip">{{view.score}} 分</text>
+        <text class="d-chip">{{view.price}}</text>
+        <text class="d-chip" wx:if="{{view.spicy}}">{{view.spicy}}</text>
+        <text class="d-chip" wx:if="{{view.revisit}}">{{view.revisit}}</text>
+      </view>
+    </view>
+  </view>
+
+  <view class="d-meta rise rise-1" wx:if="{{rv.kind_label || rv.visit_date}}">
+    <text class="muted">{{rv.kind_label}}{{rv.kind_label && rv.visit_date ? ' · ' : ''}}{{rv.visit_date}}</text>
+  </view>
+  <view class="d-tastes rise rise-1" wx:if="{{view.tastes.length}}">
+    <text class="chip" wx:for="{{view.tastes}}" wx:key="*this">{{item}}</text>
+  </view>
+
+  <!-- 判档依据 -->
+  <view class="d-tierdesc rise rise-2">
+    为什么是「{{view.tierLabel}}」：{{view.tierDesc}}
+  </view>
+
+  <view class="d-body pcard rise rise-2" wx:if="{{rv.body}}">{{rv.body}}</view>
+
+  <!-- 图集 -->
+  <scroll-view scroll-x class="d-gal" wx:if="{{gallery.length}}">
+    <image wx:for="{{gallery}}" wx:key="*this" class="d-gal-img" src="{{item}}" mode="aspectFill"
+           bindtap="preview" data-src="{{item}}" lazy-load />
+  </scroll-view>
+
+  <!-- 点单贴士 -->
+  <view class="d-tip rise rise-3" wx:if="{{rv.order_tip}}">
+    <view class="d-tip-t">📢 点单贴士</view>
+    <view>{{rv.order_tip}}</view>
+  </view>
+
+  <!-- 店铺卡 -->
+  <view class="d-shop pcard rise rise-3" wx:if="{{view.shop}}" bindtap="toShop" hover-class="p-press">
+    <view class="d-shop-l">
+      <view class="d-shop-n">{{view.shop.name}}</view>
+      <view class="muted">{{view.shop.city}} {{view.shop.district}}</view>
+    </view>
+    <text class="d-shop-a">店铺档案 ›</text>
+  </view>
+
+  <!-- 订阅辣椒 -->
+  <view class="sub-banner rise rise-4" wx:if="{{canSub}}" bindtap="doSub" hover-class="p-press">
+    <view class="txt">
+      <view class="tt">恰到货 want more？</view>
+      <view class="dd">订阅一下，新点评第一条喊你</view>
+    </view>
+    <view class="btn">订阅</view>
+  </view>
+
+  <block wx:if="{{related.length}}">
+    <view class="sect-hd"><text class="t">顺着这条恰</text></view>
+    <review-card wx:for="{{related}}" wx:key="slug" review="{{item}}" tiers="{{tiers}}" />
+  </block>
+</view>
+
+<view class="empty" wx:elif="{{!loading}}">这条点评不存在或已下线</view>

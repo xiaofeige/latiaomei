@@ -1,0 +1,135 @@
+<view class="wrap">
+  <!-- 店铺：从店铺档案里选，没有就先不去建（可留空 0） -->
+  <view class="card">
+      <view class="field">
+        <view class="field-label">关联店铺（可选）</view>
+        <picker mode="selector" range="{{shopNames}}" value="{{shopIndex}}" bindchange="onShop">
+          <view class="picker-like">{{shopIndex >= 0 ? shopNames[shopIndex] : '未选择（可不关联）'}}</view>
+        </picker>
+      </view>
+
+      <view class="field">
+        <view class="field-label">类型</view>
+        <picker mode="selector" range="{{kindNames}}" value="{{kindIndex}}" bindchange="onKind">
+          <view class="picker-like">{{kindNames[kindIndex]}}</view>
+        </picker>
+      </view>
+
+      <view class="field">
+        <view class="field-label">菜名 <text class="req">*</text></view>
+        <input class="input" placeholder="这道菜叫什么" placeholder-class="ph" value="{{form.dish}}" data-k="dish" bindinput="onInput" />
+      </view>
+
+      <view class="field">
+        <view class="field-label">一句话标题</view>
+        <input class="input" placeholder="列表页显示的一句钩子" placeholder-class="ph" value="{{form.headline}}" data-k="headline" bindinput="onInput" />
+      </view>
+  </view>
+
+  <!-- 判定 -->
+  <view class="card">
+    <view class="field">
+      <view class="field-label">档位判定</view>
+      <view class="tier-pick">
+        <view class="tier-opt {{form.tier === item.code ? 'on' : ''}}" wx:for="{{tiers}}" wx:key="code"
+              style="{{form.tier === item.code ? 'background:' + item.color : ''}}"
+              bindtap="onTier" data-code="{{item.code}}">{{item.label}}</view>
+      </view>
+    </view>
+
+    <view class="field row">
+      <view class="field-label grow">评分（0–5，可一位小数）</view>
+      <input class="input num" type="digit" placeholder="4.5" placeholder-class="ph" value="{{form.score}}" data-k="score" bindinput="onInput" />
+    </view>
+    <view class="field row">
+      <view class="field-label grow">辣度（0–5）</view>
+      <input class="input num" type="number" placeholder="0" placeholder-class="ph" value="{{form.spicy}}" data-k="spicy" bindinput="onInput" />
+    </view>
+    <view class="field row">
+      <view class="field-label grow">人均（元）</view>
+      <input class="input num" type="number" placeholder="0" placeholder-class="ph" value="{{form.price}}" data-k="price" bindinput="onInput" />
+    </view>
+    <view class="field row">
+      <view class="field-label grow">回访意愿（0–5）</view>
+      <input class="input num" type="number" placeholder="0" placeholder-class="ph" value="{{form.revisit}}" data-k="revisit" bindinput="onInput" />
+    </view>
+    <view class="field row">
+      <view class="field-label grow">探店日期</view>
+      <picker mode="date" value="{{form.visit_date}}" bindchange="onDate">
+        <view class="picker-like num">{{form.visit_date || '选择日期'}}</view>
+      </picker>
+    </view>
+    <view class="field row">
+      <view class="field-label grow">榜单序号<text class="muted">（越小越靠前，0=不指定）</text></view>
+      <input class="input num" type="number" placeholder="0" placeholder-class="ph" value="{{form.rank_no}}" data-k="rank_no" bindinput="onInput" />
+    </view>
+  </view>
+
+  <!-- 正文 -->
+  <view class="card">
+    <view class="field">
+      <view class="field-label">正文</view>
+      <textarea class="textarea" placeholder="吃过几次的真实感受……" placeholder-class="ph" value="{{form.body}}" data-k="body" bindinput="onInput" maxlength="-1" auto-height />
+    </view>
+    <view class="field">
+      <view class="field-label">点单建议</view>
+      <textarea class="textarea small" placeholder="怎么点、点几分熟、配什么" placeholder-class="ph" value="{{form.order_tip}}" data-k="order_tip" bindinput="onInput" auto-height />
+    </view>
+  </view>
+
+  <!-- 图片 -->
+  <view class="card">
+    <view class="field-label">封面</view>
+    <view class="img-row">
+      <view class="img-cell">
+        <image wx:if="{{form.cover}}" class="thumb" src="{{coverUrl}}" mode="aspectFill" bindtap="previewCover" />
+        <view wx:else class="thumb add" bindtap="pickCover">＋封面</view>
+        <view wx:if="{{form.cover}}" class="img-del" catchtap="delCover">✕</view>
+      </view>
+    </view>
+    <view class="field-label" style="margin-top:20rpx">图集（最多 9 张）</view>
+    <view class="img-row">
+      <view class="img-cell" wx:for="{{form.images}}" wx:key="*this">
+        <image class="thumb" src="{{fullImages[index]}}" mode="aspectFill" bindtap="previewImg" data-i="{{index}}" />
+        <view class="img-del" catchtap="delImg" data-i="{{index}}">✕</view>
+      </view>
+      <view class="img-cell" wx:if="{{form.images.length < 9}}">
+        <view class="thumb add" bindtap="pickImg">＋</view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 标签 -->
+  <view class="card">
+    <view class="field-label">口味标签</view>
+    <view class="tags">
+      <view class="tag {{item._on ? 'tag-on' : ''}}" wx:for="{{tastes}}" wx:key="id" bindtap="onTaste" data-i="{{index}}">{{item.name}}</view>
+    </view>
+  </view>
+
+  <!-- 状态 -->
+  <view class="card">
+    <view class="row-between">
+      <view class="field-label" style="margin:0">设为首页特写</view>
+      <switch checked="{{form.featured}}" bindchange="onFeatured" color="#b58f4a" />
+    </view>
+    <view class="divider"></view>
+    <view class="row-between">
+      <view class="field-label" style="margin:0">进首页转盘</view>
+      <switch checked="{{form.wheel}}" bindchange="onWheel" color="#b58f4a" />
+    </view>
+    <view class="divider"></view>
+    <view class="row-between">
+      <view class="field-label" style="margin:0">发布状态</view>
+      <view class="seg">
+        <view class="seg-i {{form.status === 'draft' ? 'on' : ''}}" bindtap="onStatusSet" data-v="draft">草稿</view>
+        <view class="seg-i {{form.status === 'published' ? 'on' : ''}}" bindtap="onStatusSet" data-v="published">发布</view>
+      </view>
+    </view>
+  </view>
+
+  <view class="save-bar">
+    <button class="btn-plain grow gap" bindtap="cancel">取消</button>
+    <button class="btn grow" loading="{{saving}}" bindtap="save">{{isEdit ? '保存修改' : '创建点评'}}</button>
+  </view>
+</view>

@@ -1,0 +1,148 @@
+{
+  "_⚠️必读": [
+    "★ 这是社媒自动发布配置文件，装好后你必须编辑它：四个平台的 cookie 全是 TODO，不填机器人只能生成「发布包」落盘、无法自动发布。",
+    "★ 取 cookie：桌面 Chrome 登录对应平台创作者中心 → F12 → Network → 任意请求的 Request Headers → 整串 Cookie 复制粘贴进来（一行字符串）。",
+    "★ cookie 一般 7~30 天过期；过期后任务会 fail 并提示刷新，重新复制一遍即可。",
+    "★ 渠道定位（别搞错）：抖音=只发视频（等 video 任务产片后自动发）；小红书=九宫格图文+长配文为主、偶尔视频；知乎=长文；微博=短图文快评。AI agent 日常运营重心在 小红书/知乎/微博。",
+    "★ enabled=false 的渠道机器人领到任务会产发布包后标注未自动发；cookie 有效后先保持 auto_publish=false 跑一单，去 /uploads/social/logs/ 看截图确认预填无误，再开 auto_publish 全自动。",
+    "★ 选择器/字数/文案风格都可以在这改，不用动代码；selectors 数组按顺序尝试。",
+    "★ 填完 cookie 别猜，直接体检：node tools/pipeline/smoke/check-cookie.js（只查配置）或 node tools/pipeline/smoke/check-cookie.js xiaohongshu（起浏览器真查登录态+截屏，绝不点发布）。",
+    "★ 本文件含登录态，权限已改 600；cookie 只在本机 worker 进程内注入浏览器，不回显、不进数据库、不传给小程序。"
+  ],
+  "browser": {
+    "chrome_path": "/root/.cache/ms-playwright/chromium-1234/chrome-linux64/chrome",
+    "headless": true,
+    "nav_timeout_ms": 60000
+  },
+  "defaults": {
+    "enabled": false,
+    "auto_publish": false,
+    "media": "image",
+    "max_images": 9,
+    "cookie": "TODO"
+  },
+  "douyin": {
+    "label": "抖音",
+    "media": "video",
+    "enabled": false,
+    "auto_publish": false,
+    "cookie": "TODO-粘贴登录 creator.douyin.com 后的整串 Cookie",
+    "cookie_domain": ".douyin.com",
+    "url": "https://creator.douyin.com/creator-micro/content/upload?default-tab=0",
+    "login_check": "input[type=file]",
+    "title_max": 24,
+    "body_max": 60,
+    "tag_style": "#话题",
+    "style_guide": "抖音视频文案：只配一段口播式 caption（≤60字）+ 话题 4-6 个（含 #杭州美食 #探店），视频本体由流水线 video 任务渲染，绝不用图文凑数",
+    "selectors": {
+      "upload_input": [
+        "input[type=file]"
+      ],
+      "title": [
+        "input[placeholder*='标题']",
+        "input[placeholder*='请输入标题']"
+      ],
+      "body": [
+        "div[contenteditable='true'][data-placeholder]",
+        "div[contenteditable='true']"
+      ],
+      "publish_text": [
+        "发布",
+        "发 布"
+      ]
+    }
+  },
+  "xiaohongshu": {
+    "label": "小红书",
+    "media": "image",
+    "enabled": false,
+    "auto_publish": false,
+    "cookie": "TODO-粘贴登录 creator.xiaohongshu.com 后的整串 Cookie",
+    "cookie_domain": ".xiaohongshu.com",
+    "url": "https://creator.xiaohongshu.com/publish/publish?from=menu&target=image",
+    "login_check": "input[type=file]",
+    "title_max": 20,
+    "body_max": 1000,
+    "max_images": 9,
+    "tag_style": "#话题",
+    "style_guide": "小红书笔记：图片是主角（选图按封面最馋人排序），标题带 emoji 且有钩子（≤20字），正文长配文 300-800 字、分段短句子多 emoji，话题 6-10 个（含 #杭州美食 #杭州探店）",
+    "selectors": {
+      "upload_input": [
+        "input[type=file]"
+      ],
+      "title": [
+        "input[placeholder*='标题']",
+        "input[placeholder*='填写标题']"
+      ],
+      "body": [
+        "div[contenteditable='true'][data-placeholder]",
+        "#editor-container div[contenteditable='true']",
+        "div[contenteditable='true']"
+      ],
+      "publish_text": [
+        "发布",
+        "发表"
+      ]
+    }
+  },
+  "zhihu": {
+    "label": "知乎",
+    "media": "article",
+    "enabled": false,
+    "auto_publish": false,
+    "cookie": "TODO-粘贴登录 www.zhihu.com 后的整串 Cookie",
+    "cookie_domain": ".zhihu.com",
+    "url": "https://zhuanlan.zhihu.com/write",
+    "login_check": "input[placeholder*='标题']",
+    "title_max": 60,
+    "body_max": 1500,
+    "max_images": 6,
+    "tag_style": "无",
+    "style_guide": "知乎长文：信息密度优先，开头给结论，分段小标题，配图只是点缀（没有图也照发），克制用 emoji，不堆话题标签",
+    "selectors": {
+      "upload_input": [
+        "input[type=file]"
+      ],
+      "title": [
+        "input[placeholder*='标题']"
+      ],
+      "body": [
+        "div.DraftableEditor [contenteditable='true']",
+        "div[contenteditable='true']"
+      ],
+      "publish_text": [
+        "发布文章",
+        "发布"
+      ]
+    }
+  },
+  "weibo": {
+    "label": "微博",
+    "media": "image",
+    "enabled": false,
+    "auto_publish": false,
+    "cookie": "TODO-粘贴登录 weibo.com 后的整串 Cookie",
+    "cookie_domain": ".weibo.com",
+    "url": "https://weibo.com",
+    "login_check": "textarea",
+    "title_max": 0,
+    "body_max": 300,
+    "max_images": 9,
+    "tag_style": "#话题#",
+    "style_guide": "微博：短平快九宫格快评，一条 140-300 字，开头即钩子，话题 2-4 个用 #话题# 格式，配图为王、没图不发长文",
+    "selectors": {
+      "upload_input": [
+        "input[type=file]"
+      ],
+      "title": [],
+      "body": [
+        "textarea[placeholder]",
+        "#app textarea",
+        "div[contenteditable='true']"
+      ],
+      "publish_text": [
+        "发布"
+      ]
+    }
+  }
+}

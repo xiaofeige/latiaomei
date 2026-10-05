@@ -1,0 +1,15 @@
+<view class="rc rise" hover-class="p-press" hover-stay-time="80" wx:if="{{view}}" bindtap="go" data-slug="{{view.slug}}">
+  <view class="rc-ph">
+    <view class="vc t-{{view.tier}}">{{view.tierLabel}}</view>
+    <image class="rc-img" src="{{view.cover}}" mode="aspectFill" lazy-load />
+  </view>
+  <view class="rc-main">
+    <view class="rc-dish">{{view.dish}}</view>
+    <view class="rc-head">{{view.headline}}</view>
+    <view class="rc-meta">
+      <text class="rc-score">辣条妹判 {{view.score}} 分</text>
+      <text class="rc-shop" wx:if="{{view.shop}}">{{view.shop}}</text>
+    </view>
+  </view>
+  <text class="rc-price">{{view.price}}</text>
+</view>

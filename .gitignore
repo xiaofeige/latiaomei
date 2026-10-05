@@ -1,0 +1,21 @@
+# 依赖与构建产物
+node_modules/
+build/
+src/server/latiaomei
+__pycache__/
+*.pyc
+
+# 运行时数据（库、上传、备份）——safety-words.txt 例外
+data/*
+!data/safety-words.txt
+
+# 机密：账号环境变量、微信 CI 私钥
+deploy/latiaomei.env
+*.key
+
+# 工具产出与大文件
+tools/OpenMontage/output/
+tools/OpenMontage/.cache/
+.reasonix/
+.DS_Store
+*.log

@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+
+# 站长入口和后台接口不给爬。
+# 入口路径不出现在任何前台页面里，只有站长本人知道。
+Disallow: /latiaomei
+Disallow: /latiaomei/
+Disallow: /api/admin/
+Disallow: /js/admin/

@@ -1,0 +1,7 @@
+<view class="ro" wx:if="{{show}}">
+  <text class="ro-ico">👁</text>
+  <view class="ro-txt">
+    <view class="ro-t">只读模式</view>
+    <view class="ro-d">{{text}}</view>
+  </view>
+</view>

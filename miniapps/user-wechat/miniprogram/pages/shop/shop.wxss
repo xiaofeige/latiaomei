@@ -1,0 +1,17 @@
+/* 店铺档案：硬边卡 + 荧光判决数 */
+.s-cover { width: 100%; height: 420rpx; border: 6rpx solid #111; border-radius: 24rpx; margin-bottom: 24rpx; background: #eee; box-shadow: 10rpx 10rpx 0 rgba(0, 0, 0, .14); }
+
+.s-card { padding: 32rpx; }
+.s-name { font-size: 42rpx; font-weight: 900; letter-spacing: -1rpx; }
+.s-sub { margin: 6rpx 0 4rpx; font-weight: 700; }
+.s-stats { display: flex; margin: 30rpx 0 10rpx; background: #111; border-radius: 20rpx; padding: 22rpx 0; }
+.st { flex: 1; display: flex; flex-direction: column; align-items: center; }
+.st-n { font-size: 38rpx; font-weight: 900; color: #fff; line-height: 1.15; }
+.st-n.acid { color: #ffc53d; }
+.st-n.red { color: #ff6d8f; }
+.st-l { font-size: 20rpx; font-weight: 800; color: #a29a8c; margin-top: 4rpx; }
+.s-best { margin-top: 16rpx; font-size: 28rpx; font-weight: 800; }
+.s-best .hl { background: #ffc53d; border: 4rpx solid #111; border-radius: 10rpx; padding: 2rpx 12rpx; font-weight: 900; }
+.s-note { margin-top: 16rpx; font-size: 26rpx; font-weight: 700; color: #7c7568; line-height: 1.7; }
+
+.s-douyin { margin-top: 24rpx; background: #111; color: #fff; font-weight: 900; border-radius: 22rpx; padding: 26rpx 30rpx; font-size: 26rpx; box-shadow: 8rpx 8rpx 0 rgba(255, 197, 61, .2); }

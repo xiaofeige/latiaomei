@@ -1,0 +1,34 @@
+<view class="wheelbox">
+  <block wx:if="{{segs.length >= 3}}">
+    <view class="wheel">
+      <view class="wdisc" style="transform:rotate({{angle}}deg);transition:transform {{dur}}ms cubic-bezier(.15,.92,.12,1)">
+        <canvas type="2d" id="wc" class="wc"></canvas>
+      </view>
+      <view class="wptr"></view>
+      <view class="whub {{busy ? 'busy' : ''}}" hover-class="whub-press" hover-stay-time="80" bindtap="spin">{{busy ? '…' : '转'}}</view>
+    </view>
+    <view class="wres {{bad ? 'bad' : ''}}" wx:if="{{res}}">
+      <view class="vc" style="background:{{resColor}};{{bad ? 'color:#fff' : ''}}">{{resLabel}}</view>
+      <view class="rw">
+        <text class="l">{{res.label}}</text>
+        <text class="s" wx:if="{{res.sub}}">{{res.sub}}</text>
+      </view>
+      <view class="go" hover-class="go-press" hover-stay-time="80" bindtap="go">{{bad ? '偏要恰？' : '就它了 →'}}</view>
+    </view>
+
+    <!-- 宣判弹窗：停稳那一刻的正式仪式感，点「就它了」直达详情 -->
+    <view class="pop-mask" wx:if="{{pop}}" catchtap="closePop" catchtouchmove="noop">
+      <view class="pop-card {{bad ? 'bad' : ''}}" catchtap="noop">
+        <view class="pop-k">转盘宣判</view>
+        <view class="pop-vw">{{resLabel}}</view>
+        <view class="pop-dish">{{res.label}}</view>
+        <view class="pop-sub" wx:if="{{res.sub}}">{{res.sub}}</view>
+        <view class="pop-btns">
+          <view class="pop-main" hover-class="pop-press" bindtap="pickFromPop">{{bad ? '偏要恰 →' : '就它了 →'}}</view>
+          <view class="pop-ghost" hover-class="pop-press" bindtap="againPop">{{bad ? '回头是岸' : '再转一次'}}</view>
+        </view>
+      </view>
+    </view>
+  </block>
+  <view class="wnone" wx:else><view>菜还没排满</view><view>过两天再来转</view></view>
+</view>

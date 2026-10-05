@@ -1,0 +1,67 @@
+<view class="wrap">
+  <!-- 黑底招牌：一句话说明白 -->
+  <view class="w-hero rise">
+    <view class="w-k">WISH WALL · 呼声墙</view>
+    <view class="w-t">想让辣条妹<text class="hl">替你踩哪个坑？</text></view>
+    <view class="w-d">哪家店名不副实、哪道菜该上刑、哪个新开的想去探，写下来就上榜。谁的呼声最高，她真的替你去踩。</view>
+  </view>
+
+  <!-- 递条子 -->
+  <view class="w-form rise rise-2">
+    <textarea class="w-ta" placeholder="例：西湖边新开的那家 xx 烤肉，网红店到底值不值？替我看看…"
+              placeholder-class="w-ph" maxlength="200" value="{{content}}" bindinput="onInput" />
+    <view class="w-count-row"><text class="w-count {{len >= 200 ? 'over' : ''}}">{{len}}/200</text></view>
+    <!-- 联系方式：加标题说明用途，免得被当成“莫名其妙的长条” -->
+    <view class="w-contact-lab">📮 留个联系方式（选填）</view>
+    <input class="w-contact" placeholder="微信号 / 手机号，翻牌了第一时间喊你，不会上墙公开"
+           placeholder-class="w-ph" maxlength="50" value="{{contact}}" bindinput="onContact" />
+    <view class="w-submit {{canPost && !busy ? 'on' : ''}}" bindtap="submit" hover-class="p-press">
+      {{busy ? '递条子中…' : '🙏 递愿望条，上呼声墙'}}
+    </view>
+    <button class="w-share" open-type="share">拉饭搭子一起点菜 →</button>
+  </view>
+
+  <!-- 呼声墙：全员可见，🌶 = 喊一声 -->
+  <view class="sect-hd"><text class="t">呼声墙 · 都是吃货点的菜</text><view class="ln"></view></view>
+  <view class="w-seg">
+    <text class="w-s {{wsort === 'hot' ? 'on' : ''}}" data-v="hot" bindtap="setSort" hover-class="p-press">🔥 呼声榜</text>
+    <text class="w-s {{wsort === 'new' ? 'on' : ''}}" data-v="new" bindtap="setSort" hover-class="p-press">🕐 刚递的</text>
+    <text class="w-cnt muted">{{wTotal}} 条愿望</text>
+  </view>
+
+  <view class="w-item wall rise" wx:for="{{wall}}" wx:key="id">
+    <view class="w-sticker s-{{item.status}}" wx:if="{{item.status !== 'new'}}">{{item.sticker}}</view>
+    <view class="w-body">
+      <view class="w-c">{{item.content}}</view>
+      <view class="w-reply" wx:if="{{item.note}}">辣条妹批复：{{item.note}}</view>
+      <view class="w-meta">
+        <text class="w-nick">{{item.nick}}</text>
+        <text class="w-me" wx:if="{{item.mine}}">我递的</text>
+        <text class="w-time muted">{{item.timeTxt}}</text>
+      </view>
+    </view>
+    <view class="w-act">
+      <view class="w-rank rk{{index + 1}}" wx:if="{{wsort === 'hot' && index < 3}}">{{index + 1}}</view>
+      <view class="w-like {{item.liked ? 'on' : ''}}" data-i="{{index}}" bindtap="like" hover-class="p-press">
+        <text class="wl-ic">🌶</text><text class="wl-n">{{item.likes}}</text>
+      </view>
+    </view>
+  </view>
+  <view class="muted w-tip" wx:if="{{wLoading}}">墙上正忙着…</view>
+  <view class="muted w-tip" wx:elif="{{!wall.length}}">墙上还空着，递第一条的就是你</view>
+
+  <!-- 我的条子 -->
+  <block wx:if="{{mine.length}}">
+    <view class="sect-hd"><text class="t">我递过的条子</text><view class="ln"></view></view>
+    <view class="w-item rise rise-3" wx:for="{{mine}}" wx:key="id">
+      <view class="w-sticker s-{{item.status}}">{{item.sticker}}</view>
+      <view class="w-body">
+        <view class="w-c">{{item.content}}</view>
+        <view class="w-reply" wx:if="{{item.note}}">辣条妹批复：{{item.note}}</view>
+        <view class="w-time muted">{{item.timeTxt}}</view>
+      </view>
+    </view>
+  </block>
+
+  <view class="muted w-foot">喊的人越多，辣条妹先去踩谁的坑</view>
+</view>

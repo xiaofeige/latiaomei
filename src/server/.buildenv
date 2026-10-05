@@ -1,0 +1,5 @@
+# 手工编译时对齐 deploy/build.sh 的环境（source 或用 env 前缀）。
+GOMEMLIMIT=700MiB
+GOGC=50
+GOMAXPROCS=2
+CGO_ENABLED=0

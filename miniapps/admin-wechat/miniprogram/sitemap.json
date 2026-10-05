@@ -1,0 +1,1 @@
+{ "desc": "管理后台小程序不对外，禁止被搜索索引", "rules": [{ "action": "disallow", "page": "*" }] }

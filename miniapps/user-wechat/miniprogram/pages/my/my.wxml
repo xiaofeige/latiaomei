@@ -1,0 +1,48 @@
+<view class="wrap">
+  <!-- IP 海报卡：辣条妹本人 C 位，全站吉祥物就在这 -->
+  <view class="ip rise">
+    <view class="ip-k">LATIAOMEI · 杭州美食第一人</view>
+    <image class="ip-hero" src="/images/latiaomei-hero.svg" mode="aspectFit" />
+    <view class="ip-name">辣条妹</view>
+    <view class="ip-handle">{{site.ip_handle || '@辣条妹的御膳房'}}{{site.ip_city ? ' · ' + site.ip_city : ''}}</view>
+    <view class="ip-quote" wx:if="{{site.ip_quote}}">「{{site.ip_quote}}」</view>
+    <view class="ip-tg">🌶 10年老杭州外地人 · 吃遍杭州美食</view>
+    <view class="ip-fans" wx:if="{{site.fans_display}}">全网粉丝 <text class="fn">{{site.fans_display}}</text> · 每条判词本人手写过</view>
+  </view>
+
+  <!-- 战绩带：黑底荧光数，点一下全进榜单 -->
+  <view class="me-stats rise rise-2">
+    <view class="st" bindtap="toRank"><text class="st-n">{{counters.published || counters.reviews || 0}}</text><text class="st-l">条判过</text></view>
+    <view class="st" bindtap="toRank"><text class="st-n acid">{{counters.hang || 0}}</text><text class="st-l">封神菜</text></view>
+    <view class="st" bindtap="toRank"><text class="st-n pink">{{counters.la || 0}}</text><text class="st-l">被避雷</text></view>
+    <view class="st" bindtap="toRank"><text class="st-n cyan">{{counters.shops || 0}}</text><text class="st-l">家店档案</text></view>
+  </view>
+
+  <!-- 开饭提醒 -->
+  <view class="sub-banner rise rise-3" wx:if="{{canSub}}" bindtap="doSub" hover-class="p-press">
+    <view class="txt">
+      <view class="tt">{{subbed ? '已订阅 · 可再加一条' : '开饭提醒'}}</view>
+      <view class="dd">{{subbed ? '每次点允许 = 多收一条新点评推送' : '新的辣评落地，第一条喊你恰'}}</view>
+    </view>
+    <view class="btn">{{subbed ? '续订' : '订阅'}}</view>
+  </view>
+
+  <!-- 她的江湖 -->
+  <view class="sect-hd"><text class="t">她的江湖</text><view class="ln"></view></view>
+  <view class="me-row rise rise-4" bindtap="toWish" hover-class="p-press">
+    <text class="me-ic">🙏</text><view class="me-tx"><text class="tt">许愿墙</text><text class="dd">想让辣条妹替你踩哪个坑，点菜就行</text></view><text class="me-a">›</text>
+  </view>
+  <view class="me-row rise rise-4" bindtap="toHome" hover-class="p-press">
+    <text class="me-ic">🎡</text><view class="me-tx"><text class="tt">去转转盘</text><text class="dd">选择困难症救赎之所</text></view><text class="me-a">›</text>
+  </view>
+  <view class="me-row rise rise-5" bindtap="toRank" hover-class="p-press">
+    <text class="me-ic">🌶</text><view class="me-tx"><text class="tt">逛榜单</text><text class="dd">夯的顶级的人上人的NPC的拉的，全在这</text></view><text class="me-a">›</text>
+  </view>
+  <view class="me-row rise rise-6" bindtap="copyDouyin" hover-class="p-press">
+    <text class="me-ic">📲</text><view class="me-tx"><text class="tt">辣条妹的抖音</text><text class="dd">视频更毒舌，链接给你复制</text></view><text class="me-a">›</text>
+  </view>
+
+  <button class="ip-share" open-type="share">把辣条妹安利给饭搭子 →</button>
+
+  <view class="me-foot muted">机器只提案，每条都是辣条妹本人审过才发的</view>
+</view>

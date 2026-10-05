@@ -1,0 +1,28 @@
+<view class="wrap">
+  <view class="card">
+    <view class="field-label">新增标签</view>
+    <view class="row gap-row">
+      <input class="input grow" placeholder="标签名，如：辣、宵夜" placeholder-class="ph" value="{{newName}}" bindinput="onNewName" />
+      <view class="seg">
+        <view class="seg-i {{newKind === 'taste' ? 'on' : ''}}" bindtap="setKind" data-v="taste">口味</view>
+        <view class="seg-i {{newKind === 'scene' ? 'on' : ''}}" bindtap="setKind" data-v="scene">场景</view>
+      </view>
+    </view>
+    <button class="btn add-btn" bindtap="add">添加</button>
+  </view>
+
+  <view class="card" wx:for="{{groups}}" wx:key="kind" wx:for-item="g">
+    <view class="row-between">
+      <view class="title sec-title">{{g.label}}</view>
+      <view class="muted">{{g.list.length}} 个</view>
+    </view>
+    <view class="t-row" wx:for="{{g.list}}" wx:key="id" wx:for-item="t">
+      <view class="t-left" bindtap="rename" data-id="{{t.id}}" data-name="{{t.name}}" data-kind="{{t.kind}}">
+        <view class="t-name">{{t.name}}</view>
+        <view class="muted">slug: {{t.slug}} · 已用于 {{t.count || 0}} 条</view>
+      </view>
+      <view class="t-act" bindtap="remove" data-id="{{t.id}}" data-name="{{t.name}}">删除</view>
+    </view>
+    <view class="empty small" wx:if="{{!g.list.length}}">暂无</view>
+  </view>
+</view>

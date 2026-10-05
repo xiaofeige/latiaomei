@@ -1,0 +1,90 @@
+/* 辣条妹主题 v3 —— 暖白报纸底 + 黑硬描边 + 低饱和撞色 + 一字判决贴纸。
+   波普骨架不变（描边/硬影/贴纸），收敛的是荧光三原色：黄→蜜蜡、粉→珊瑚、青→鼠尾草。
+   改颜色只动这里，别在组件里写死。 */
+
+/* 全站锁 border-box（web 站靠 *{box-sizing} 成立的硬边卡，小程序默认 content-box，
+   width:100%+边框会撑宽视口、整页能左右拖——这里一次性补上）；再给 page 兜一道防横滚。 */
+page { box-sizing: border-box; overflow-x: hidden; }
+view, text, image, button, input, scroll-view, navigator { box-sizing: border-box; }
+
+page {
+  --latiao: #ff5a1f;  /* 辣油橙：唯一主行动色（CTA/选中/招牌硬影） */
+  --acid: #ffc53d;    /* 蜜蜡黄：高亮贴纸/结果卡实底（原荧光黄，收敛为食物感） */
+  --pink: #ff6d8f;    /* 珊瑚粉：点缀判决/愿望贴纸 */
+  --cyan: #35d0c0;    /* 鼠尾草青：只给「AI 在线」语义，别处不用 */
+  --red: #d0452e;     /* 砖红：避雷/价格警示 */
+  --ink: #111;        /* 描边与正文黑（硬边招牌，保留） */
+  --charcoal: #211a13;/* 深色卡底：暖炭黑，代替冷 #111 大面积铺底，和纸色同温 */
+  --paper: #fff6e8;   /* 页面底色 */
+  --muted: #7c7568;
+  background: var(--paper);
+  color: var(--ink);
+  font-size: 28rpx;
+  line-height: 1.6;
+  font-family: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", system-ui, -apple-system, sans-serif;
+}
+.wrap { padding: 24rpx 24rpx 60rpx; }
+
+/* 区块标题：900 黑标 + 黑底蜜蜡黄「更多」贴纸（对齐 web .sect） */
+.sect-hd { display: flex; align-items: center; margin: 44rpx 4rpx 22rpx; }
+.sect-hd .t { font-size: 36rpx; font-weight: 900; letter-spacing: -1rpx; color: var(--ink); }
+.sect-hd .ln { flex: 1; height: 6rpx; margin: 0 16rpx; background: repeating-linear-gradient(90deg, #111 0 14rpx, transparent 14rpx 24rpx); }
+.sect-hd .more { font-size: 22rpx; font-weight: 900; background: var(--ink); color: var(--acid); padding: 8rpx 18rpx; border-radius: 14rpx; margin-left: auto; }
+
+/* 点评卡：硬边卡 + 图片上压「一字判决」贴纸（对齐 web .rv） */
+.rc { position: relative; display: flex; background: #fffdf6; border: 5rpx solid var(--ink); border-radius: 24rpx; padding: 20rpx; margin-bottom: 24rpx; box-shadow: 8rpx 8rpx 0 rgba(0, 0, 0, .14); box-sizing: border-box; }
+.rc-ph { position: relative; flex-shrink: 0; }
+.rc-img { width: 168rpx; height: 168rpx; border: 5rpx solid var(--ink); border-radius: 18rpx; background: #eee; display: block; box-sizing: border-box; }
+.rc-main { flex: 1; margin-left: 22rpx; min-width: 0; display: flex; flex-direction: column; }
+.rc-dish { font-size: 32rpx; font-weight: 900; letter-spacing: -1rpx; padding-right: 110rpx; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rc-head { font-size: 24rpx; font-weight: 700; color: #5f5a4f; margin-top: 8rpx; line-height: 1.45; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.rc-meta { display: flex; align-items: center; margin-top: auto; padding-top: 12rpx; gap: 16rpx; font-size: 22rpx; font-weight: 900; color: var(--muted); }
+.rc-score { color: var(--latiao); }
+.rc-shop { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 240rpx; font-weight: 800; }
+
+/* 一字判决贴纸：五档柔和食物色，压在图上歪一点点（对齐 web .vc） */
+.vc { width: 64rpx; height: 64rpx; border: 5rpx solid var(--ink); border-radius: 16rpx; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 26rpx; line-height: 1; box-sizing: border-box; }
+.rc .vc { position: absolute; left: -14rpx; top: -16rpx; transform: rotate(-6deg); box-shadow: 4rpx 4rpx 0 #111; z-index: 2; }
+.vc.t-hang { background: var(--acid); color: #111; }
+.vc.t-dingji { background: #ffc3d2; color: #111; }
+.vc.t-renshang { background: #cfe6b8; color: #111; }
+.vc.t-npc { background: #a9ded5; color: #111; }
+.vc.t-la { background: #141414; color: #fff; }
+
+/* 价格：右上角红标（对齐 web .rv .pr） */
+.rc-price { position: absolute; right: 24rpx; top: 26rpx; font-weight: 900; color: var(--red); font-size: 28rpx; }
+
+/* 横向滑条 */
+.hscroll { white-space: nowrap; }
+.hscroll .rc { display: inline-flex; width: 520rpx; white-space: normal; vertical-align: top; }
+
+/* 通用徽章/标签：白底黑边小药丸，选中翻蜜蜡黄（对齐 web .chip） */
+.chip { display: inline-block; font-size: 22rpx; font-weight: 900; color: var(--ink); background: #fffdf6; border: 4rpx solid var(--ink); border-radius: 999rpx; padding: 8rpx 22rpx; margin: 0 12rpx 14rpx 0; box-shadow: 4rpx 4rpx 0 rgba(0, 0, 0, .12); }
+.chip.on { background: var(--acid); }
+
+/* 订阅辣椒条：黑卡荧光按钮 */
+.sub-banner { display: flex; align-items: center; background: var(--ink); color: #fff; border-radius: 24rpx; padding: 26rpx 30rpx; margin: 24rpx 0; box-shadow: 8rpx 8rpx 0 rgba(255, 197, 61, .2); }
+.sub-banner .txt { flex: 1; }
+.sub-banner .tt { font-size: 30rpx; font-weight: 900; }
+.sub-banner .dd { font-size: 22rpx; color: #a29a8c; margin-top: 6rpx; font-weight: 700; }
+.sub-banner .btn { background: var(--acid); color: var(--ink); font-size: 26rpx; font-weight: 900; border-radius: 999rpx; padding: 14rpx 32rpx; }
+
+/* 白底硬边通用卡（详情页/店铺页共用） */
+.pcard { background: #fffdf6; border: 5rpx solid var(--ink); border-radius: 24rpx; padding: 28rpx; box-shadow: 8rpx 8rpx 0 rgba(0, 0, 0, .14); }
+
+/* ---------------- 动效系统（impeccable） ----------------
+   焦点时刻在转盘；其余只保留三类：入场级联、按压反馈、状态弹入。
+   统一曲线 cubic-bezier(.16,1,.3,1)：自信减速。 */
+@keyframes rise { from { opacity: 0; transform: translateY(28rpx); } to { opacity: 1; transform: translateY(0); } }
+/* 用 backwards 不用 both：动画结束后不残留 transform，
+   否则带 rise 的祖先会变成 position:fixed 的包含块，把转盘宣判弹窗的遮罩困在区块里 */
+.rise { animation: rise .5s cubic-bezier(.16, 1, .3, 1) backwards; }
+.rise-1 { animation-delay: .04s; } .rise-2 { animation-delay: .1s; }
+.rise-3 { animation-delay: .16s; } .rise-4 { animation-delay: .22s; }
+.rise-5 { animation-delay: .28s; } .rise-6 { animation-delay: .34s; }
+
+/* 按压反馈：硬阴影卡缩一下，手感像按贴纸 */
+.p-press { transform: translate(4rpx, 4rpx) scale(.99); opacity: .92; }
+
+.empty { text-align: center; color: var(--muted); padding: 100rpx 0; font-size: 26rpx; font-weight: 800; }
+.muted { color: var(--muted); font-size: 24rpx; }

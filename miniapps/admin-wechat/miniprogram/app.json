@@ -1,0 +1,50 @@
+{
+  "pages": [
+    "pages/dashboard/dashboard",
+    "pages/content/content",
+    "pages/pipeline/pipeline",
+    "pages/project/project",
+    "pages/tasks/tasks",
+    "pages/mine/mine",
+    "pages/reviews/reviews",
+    "pages/shops/shops",
+    "pages/shop-archive/shop-archive",
+    "pages/review-edit/review-edit",
+    "pages/shop-edit/shop-edit",
+    "pages/tastes/tastes",
+    "pages/settings/settings",
+    "pages/analytics/analytics",
+    "pages/wheel/wheel",
+    "pages/members/members",
+    "pages/audit/audit",
+    "pages/wishes/wishes"
+  ],
+  "window": {
+    "backgroundTextStyle": "dark",
+    "navigationBarBackgroundColor": "#1a1a1a",
+    "navigationBarTitleText": "辣条妹 · 后台",
+    "navigationBarTextStyle": "white",
+    "backgroundColor": "#f4f1ea"
+  },
+  "permission": {
+    "scope.userLocation": {
+      "desc": "给店铺标位置用，方便粉丝在转盘里转到你附近的店"
+    }
+  },
+  "requiredPrivateInfos": ["chooseLocation"],
+  "tabBar": {
+    "color": "#9a958c",
+    "selectedColor": "#b58f4a",
+    "backgroundColor": "#ffffff",
+    "borderStyle": "white",
+    "list": [
+      { "pagePath": "pages/dashboard/dashboard", "text": "概览" },
+      { "pagePath": "pages/content/content", "text": "内容" },
+      { "pagePath": "pages/pipeline/pipeline", "text": "工作台" },
+      { "pagePath": "pages/mine/mine", "text": "我的" }
+    ]
+  },
+  "style": "v2",
+  "sitemapLocation": "sitemap.json",
+  "lazyCodeLoading": "requiredComponents"
+}

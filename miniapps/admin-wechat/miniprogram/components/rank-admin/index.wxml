@@ -1,0 +1,66 @@
+<view class="ra">
+  <view class="ra-top">
+    <ro-banner wx:if="{{!canWrite}}" text="只读模式：可以查看榜单，不能录入、下线或调整名次。"></ro-banner>
+
+    <!-- 只有一条工具行：搜索 + 草稿箱 + 店铺档案（探店）。底部 Tab 切栏目，这里不再放 tab。 -->
+    <view class="ra-tools">
+      <view class="ra-search">
+        <input class="ra-search-i" placeholder="搜菜名 / 店铺 / 正文" placeholder-class="ra-ph" value="{{q}}"
+               confirm-type="search" bindconfirm="onSearch" bindinput="onQInput" />
+        <view class="ra-clear" wx:if="{{q}}" bindtap="onClear">✕</view>
+      </view>
+      <view class="ra-tool {{mode === 'draft' ? 'on' : ''}}" bindtap="toggleDraft">{{mode === 'draft' ? '回榜单' : '草稿'}}</view>
+      <view class="ra-tool" wx:if="{{cfg.showArchive}}" bindtap="goArchive">档案</view>
+    </view>
+
+    <view class="ra-hint" wx:if="{{mode === 'rank'}}">
+      按住 ⠿ 拖拽改名次，或点名次牌「上移/下移/置首/改分」；保存后就是网站排行榜的名次
+    </view>
+    <view class="ra-hint" wx:elif="{{mode === 'draft'}}">草稿不对外展示，点「发布」进榜；点「回榜单」继续排名次</view>
+    <view class="ra-hint" wx:else>搜索结果不参与名次调整，点条目去编辑</view>
+  </view>
+
+  <scroll-view class="ra-scroll" scroll-y scroll-top="{{scrollSet}}" bindscroll="onScroll">
+    <view class="ra-row {{item._drag ? 'dragging' : ''}}" wx:for="{{items}}" wx:key="id"
+          style="transform: translateY({{item._tf}}px)"
+          bindtap="edit" data-id="{{item.id}}">
+      <view class="ra-grip" wx:if="{{canWrite && mode === 'rank'}}" data-i="{{index}}" catchtap="noop"
+            catch:touchstart="onGripStart" catch:touchmove="onGripMove"
+            catch:touchend="onGripEnd" catch:touchcancel="onGripEnd">⠿</view>
+      <view class="ra-rk {{mode === 'rank' && index < 3 ? 'top' : ''}}" wx:if="{{canWrite && mode === 'rank'}}"
+            catchtap="rowOps" data-i="{{index}}">{{index + 1}}</view>
+      <view class="ra-rk {{mode === 'rank' && index < 3 ? 'top' : ''}}" wx:else>{{mode === 'rank' ? index + 1 : '·'}}</view>
+      <view class="ra-badge" style="background:{{item.tier_color}}">{{item.tier_label}}</view>
+      <view class="ra-main">
+        <view class="ra-dish">{{item.dish}}</view>
+        <view class="ra-sub">
+          <text>{{item.shop || cfg.name}}</text>
+          <text> · {{item.score}} 分</text>
+          <text wx:if="{{item.status === 'draft'}}"> · 草稿</text>
+          <text wx:if="{{item.wheel}}"> · 在转盘</text>
+          <text wx:if="{{mode === 'rank' && !item.rank_no}}"> · 原未提名次</text>
+        </view>
+      </view>
+      <view class="ra-acts" wx:if="{{canWrite}}">
+        <view class="ra-act" catchtap="quickScore" data-i="{{index}}" data-id="{{item.id}}" data-score="{{item.score}}" data-dish="{{item.dish}}">{{item.score}}分</view>
+        <view class="ra-act" wx:if="{{item.status === 'draft'}}" catchtap="publish" data-id="{{item.id}}">发布</view>
+        <view class="ra-act" wx:else catchtap="unpublish" data-id="{{item.id}}">下线</view>
+        <view class="ra-act del" catchtap="remove" data-id="{{item.id}}" data-dish="{{item.dish}}">删</view>
+      </view>
+    </view>
+
+    <view class="ra-empty" wx:if="{{!loading && !items.length && mode === 'rank'}}">这个榜还空着，点右下角 ＋ 录入第一条</view>
+    <view class="ra-empty" wx:elif="{{!loading && !items.length && mode === 'draft'}}">没有草稿</view>
+    <view class="ra-empty" wx:elif="{{!loading && !items.length}}">没搜到内容</view>
+    <view class="ra-loading" wx:if="{{loading}}">加载中…</view>
+    <view class="ra-pad"></view>
+  </scroll-view>
+
+  <view class="ra-fab" wx:if="{{canWrite}}" bindtap="create">＋</view>
+
+  <view class="ra-savebar" wx:if="{{canWrite && mode === 'rank'}}">
+    <view class="ra-save-tip {{dirty ? 'warn' : ''}}">{{dirty ? '有未保存的名次改动' : '顺序已同步'}}</view>
+    <view class="ra-sbtn" wx:if="{{dirty}}" bindtap="discard">放弃</view>
+    <view class="ra-sbtn primary {{dirty ? '' : 'dis'}}" bindtap="save">保存名次</view>
+  </view>
+</view>

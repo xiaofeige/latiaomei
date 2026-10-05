@@ -1,0 +1,37 @@
+<view class="wrap">
+  <view class="sbox">
+    <text class="s-ic">🔍</text>
+    <input class="sinput" placeholder="搜菜名 / 店名" placeholder-class="s-ph" confirm-type="search"
+           bindconfirm="onSearch" value="{{f.q}}" />
+    <text class="s-clear" wx:if="{{f.q}}" bindtap="clearSearch">✕</text>
+  </view>
+
+  <!-- 栏目 + 排序 -->
+  <view class="bar">
+    <view class="seg">
+      <text wx:for="{{kinds}}" wx:key="code" class="seg-i {{f.kind === item.code ? 'on' : ''}}"
+            data-v="{{item.code}}" bindtap="setKind">{{item.label}}</text>
+    </view>
+    <view class="seg right">
+      <text wx:for="{{sorts}}" wx:key="code" class="seg-i {{f.sort === item.code ? 'on' : ''}}"
+            data-v="{{item.code}}" bindtap="setSort">{{item.label}}</text>
+    </view>
+  </view>
+
+  <!-- 档位 chips（夯/顶级/人上人/NPC/拉完了，色板来自后端） -->
+  <scroll-view scroll-x class="chips" wx:if="{{f.kind === 'tandian'}}">
+    <text wx:for="{{tiers}}" wx:key="code" class="chip {{f.tier === item.code ? 'on' : ''}}"
+          style="{{f.tier === item.code ? 'background:' + item.pop + ';color:' + (item.code === 'la' ? '#fff' : '#111') : ''}}"
+          data-v="{{item.code}}" bindtap="setTier">{{item.label}} · {{item.name}}</text>
+  </scroll-view>
+
+  <!-- 口味 chips -->
+  <scroll-view scroll-x class="chips" wx:if="{{tastes.length}}">
+    <text wx:for="{{tastes}}" wx:key="slug" class="chip {{f.taste === item.slug ? 'on' : ''}}"
+          data-v="{{item.slug}}" bindtap="setTaste">{{item.name}}</text>
+  </scroll-view>
+
+  <review-card wx:for="{{items}}" wx:key="slug" review="{{item}}" tiers="{{tiers}}" />
+  <view class="empty" wx:if="{{!loading && !items.length}}">这个筛法还没菜，换一口？</view>
+  <view class="muted moretip" wx:if="{{items.length && !hasMore}}">共 {{total}} 条，恰完了</view>
+</view>

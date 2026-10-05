@@ -1,0 +1,6 @@
+{
+  "navigationBarTitleText": "店铺档案",
+  "enablePullDownRefresh": true,
+  "backgroundTextStyle": "dark",
+  "usingComponents": { "ro-banner": "/components/ro-banner/index" }
+}

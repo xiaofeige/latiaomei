@@ -1,0 +1,104 @@
+/* 呼声墙：全站黑边波普语言，招牌黑卡 + 荧光按钮 + 状态贴纸 + 🌶 呼声 */
+/* tab 页：给自定义 tab bar 让位 */
+.wrap {
+  padding-bottom: calc(230rpx + env(safe-area-inset-bottom));
+}
+.w-hero {
+  background: linear-gradient(150deg, #2c231a, #1a140e); border-radius: 28rpx; padding: 40rpx 32rpx; color: #fff;
+  box-shadow: 10rpx 10rpx 0 rgba(255, 197, 61, .22); position: relative; overflow: hidden;
+}
+.w-k { font-size: 18rpx; letter-spacing: 4rpx; font-weight: 900; color: #ffc53d; }
+.w-t { font-size: 48rpx; font-weight: 900; line-height: 1.25; letter-spacing: -1rpx; margin-top: 12rpx; }
+.w-t .hl { color: #ffc53d; text-shadow: 6rpx 6rpx 0 #ff5a1f; }
+.w-d { font-size: 24rpx; font-weight: 700; color: #a29a8c; margin-top: 16rpx; line-height: 1.7; }
+
+.w-form {
+  background: #fffdf6; border: 5rpx solid #111; border-radius: 24rpx; padding: 24rpx;
+  margin-top: 26rpx; box-shadow: 8rpx 8rpx 0 rgba(0, 0, 0, .14); position: relative;
+}
+/* 大输入区：固定 200rpx 高（去掉 auto-height，它会把高度压回一行，min-height 拦不住），
+   字大加粗看得清，写满了框内滚动。 */
+.w-ta { width: 100%; height: 200rpx; font-size: 30rpx; font-weight: 700; line-height: 1.8; }
+.w-ph { color: #b3ab9c; font-weight: 600; }
+.w-count-row { display: flex; justify-content: flex-end; margin-top: 4rpx; }
+.w-count { font-size: 20rpx; font-weight: 900; color: #7c7568; }
+.w-count.over { color: #d0452e; }
+.w-contact-lab {
+  font-size: 24rpx; font-weight: 900; color: #111; margin-top: 18rpx;
+}
+.w-contact {
+  border: 4rpx solid #111; border-radius: 16rpx; padding: 20rpx 22rpx; font-size: 28rpx;
+  font-weight: 700; line-height: 1.5; min-height: 88rpx; margin-top: 10rpx;
+  box-sizing: border-box; width: 100%;
+}
+.w-submit {
+  margin-top: 24rpx; background: #d8d5cc; color: #a89f8f; font-size: 32rpx; font-weight: 900;
+  border: 5rpx solid #111; border-radius: 999rpx; padding: 20rpx 0; line-height: 1.4; text-align: center;
+}
+.w-submit.on { background: #ffc53d; color: #111; box-shadow: 8rpx 8rpx 0 rgba(0, 0, 0, .2); }
+.w-submit.on:active { transform: translate(4rpx, 4rpx); box-shadow: 4rpx 4rpx 0 rgba(0, 0, 0, .2); }
+.w-share {
+  margin-top: 18rpx; background: transparent; border: 4rpx dashed #111; color: #111;
+  font-size: 24rpx; font-weight: 900; border-radius: 999rpx; padding: 14rpx 0; line-height: 1.4;
+}
+.w-share::after { border: none; }
+
+/* 排序切换 */
+.w-seg { display: flex; align-items: center; gap: 14rpx; margin: 4rpx 0 20rpx; }
+.w-s {
+  font-size: 24rpx; font-weight: 900; background: #fffdf6; border: 4rpx solid #111;
+  border-radius: 999rpx; padding: 10rpx 26rpx; box-shadow: 4rpx 4rpx 0 rgba(0, 0, 0, .12);
+}
+.w-s.on { background: #ffc53d; box-shadow: 4rpx 4rpx 0 #111; }
+.w-cnt { margin-left: auto; font-size: 20rpx; font-weight: 800; }
+
+/* 愿望条 */
+.w-item {
+  display: flex; background: #fffdf6; border: 5rpx solid #111; border-radius: 22rpx;
+  padding: 22rpx 24rpx; margin-top: 20rpx; box-shadow: 8rpx 8rpx 0 rgba(0, 0, 0, .14);
+}
+.w-sticker {
+  flex-shrink: 0; width: 96rpx; height: 96rpx; margin-right: 20rpx;
+  border: 5rpx solid #111; border-radius: 18rpx; display: flex; align-items: center; justify-content: center;
+  font-weight: 900; font-size: 22rpx; line-height: 1.2; text-align: center;
+  transform: rotate(-4deg); box-shadow: 4rpx 4rpx 0 #111; background: #ffc53d; color: #111;
+}
+.w-sticker.s-picked { background: #ff6d8f; color: #fff; }
+.w-sticker.s-done { background: #cfe6b8; }
+.w-sticker.s-read { background: #a9ded5; }
+.w-sticker.s-rejected { background: #141414; color: #fff; }
+.w-body { flex: 1; min-width: 0; }
+.w-c { font-size: 27rpx; font-weight: 800; line-height: 1.7; word-break: break-all; }
+.w-reply {
+  margin-top: 10rpx; font-size: 22rpx; font-weight: 800; color: #111; background: #fff6e8;
+  border-left: 8rpx solid #ff5a1f; padding: 8rpx 16rpx; border-radius: 0 12rpx 12rpx 0;
+}
+.w-meta { display: flex; align-items: center; gap: 14rpx; margin-top: 12rpx; }
+.w-nick { font-size: 21rpx; font-weight: 900; color: #00707d; background: rgba(53, 208, 192, .12); border-radius: 8rpx; padding: 2rpx 12rpx; }
+.w-me { font-size: 19rpx; font-weight: 900; color: #111; background: #ffc53d; border: 3rpx solid #111; border-radius: 8rpx; padding: 0 10rpx; }
+.w-time { font-size: 20rpx; }
+.w-item .w-time { margin-top: 8rpx; }
+
+/* 右列：名次 + 喊一声 */
+.w-act { flex-shrink: 0; width: 96rpx; display: flex; flex-direction: column; align-items: center; gap: 12rpx; margin-left: 14rpx; }
+.w-rank {
+  width: 44rpx; height: 44rpx; border-radius: 50%; border: 4rpx solid #111;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 24rpx; font-weight: 900; box-shadow: 3rpx 3rpx 0 #111; background: #d8d5cc; color: #111;
+}
+.w-rank.rk1 { background: #ffc53d; }
+.w-rank.rk2 { background: #ffc3d2; }
+.w-rank.rk3 { background: #a9ded5; }
+.w-like {
+  margin-top: auto; display: flex; align-items: center; gap: 6rpx;
+  background: #fffdf6; border: 4rpx solid #111; border-radius: 999rpx;
+  padding: 10rpx 18rpx; box-shadow: 4rpx 4rpx 0 rgba(0, 0, 0, .14);
+}
+.w-like .wl-ic { font-size: 26rpx; }
+.w-like .wl-n { font-size: 24rpx; font-weight: 900; min-width: 26rpx; text-align: center; }
+.w-like.on { background: #ff5a1f; border-color: #111; box-shadow: 4rpx 4rpx 0 #111; }
+.w-like.on .wl-n { color: #fff; }
+.w-like:active { transform: translate(2rpx, 2rpx); box-shadow: 2rpx 2rpx 0 rgba(0, 0, 0, .14); }
+
+.w-tip { text-align: center; margin-top: 40rpx; font-weight: 800; }
+.w-foot { text-align: center; margin-top: 36rpx; }

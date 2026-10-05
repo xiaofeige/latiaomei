@@ -1,0 +1,206 @@
+<view class="wrap">
+  <!-- ================= 立项（无 id 时的第一屏） ================= -->
+  <view class="card" wx:if="{{creating}}">
+    <view class="sec-head">
+      <view class="sec-title">新建项目</view>
+      <view class="sec-cap">一条视频/一组文案 = 一个项目，可反复改再来</view>
+    </view>
+    <view class="field">
+      <view class="field-label">项目标题</view>
+      <input class="input" placeholder="例：西湖夜宵漫游" placeholder-class="ph" value="{{title}}" bindinput="onTitle" />
+    </view>
+    <view class="step">
+      <view class="step-head">
+        <view class="step-bar"></view>
+        <text class="step-t">语音说需求</text>
+        <text class="step-cap">选填 · 转写进草稿，AI 整理后才进提示词</text>
+      </view>
+      <view class="voice-row">
+        <view class="voice-btn {{recording ? 'rec' : ''}}" bindtouchstart="voiceStart" bindtouchend="voiceEnd" bindtouchcancel="voiceEnd">
+          {{recording ? '松手结束' : '按住说话'}}
+        </view>
+        <textarea class="textarea voice-area" placeholder="说的话转成文字落在这里" placeholder-class="ph"
+                  value="{{voiceDraft}}" bindinput="onVoiceInput" auto-height maxlength="-1" />
+      </view>
+      <view class="row voice-ops">
+        <view class="grow"></view>
+        <button class="btn-sm approve" loading="{{polishing}}" bindtap="polish">AI 整理 → 写进提示词</button>
+      </view>
+    </view>
+    <view class="step">
+      <view class="step-head">
+        <view class="step-bar"></view>
+        <text class="step-t">制片提示词</text>
+        <text class="step-cap">讲什么、给谁看、什么调性；立项后还能改</text>
+      </view>
+      <textarea class="textarea" placeholder="直接打字，或让语音转写帮你起草稿" placeholder-class="ph"
+                value="{{brief}}" bindinput="onBrief" maxlength="4000" auto-height />
+      <view class="row-between prompt-ops" wx:if="{{polishedBackup}}">
+        <text class="muted">{{brief.length || 0}} 字</text>
+        <text class="link" bindtap="restoreBrief">恢复整理前的原文</text>
+      </view>
+    </view>
+    <view class="step">
+      <view class="step-head">
+        <view class="step-bar"></view>
+        <text class="step-t">首批素材</text>
+        <text class="step-cap">选填 · 立项后工作区里还能继续加</text>
+      </view>
+      <view class="mat-row">
+        <view class="mat-cell" wx:for="{{assets}}" wx:key="key">
+          <image class="mat-thumb" src="{{item._url}}" mode="aspectFill" />
+          <view class="mat-spin" wx:if="{{item.uploading}}">上传中</view>
+          <view class="mat-del" catchtap="delAsset" data-i="{{index}}">✕</view>
+        </view>
+        <view class="mat-cell">
+          <view class="mat-add" bindtap="pickImages">＋<text class="mat-add-t">图</text></view>
+        </view>
+      </view>
+    </view>
+    <button class="btn studio-submit" bindtap="submitCreate">立项</button>
+    <view class="muted flow-tip center">主角镜头自动挂辣条妹三视图/特写（happyhorse 生成动态画面）。</view>
+  </view>
+
+  <!-- ================= 工作区 ================= -->
+  <block wx:else>
+    <view class="card">
+      <view class="row-between">
+        <view class="sec-title">{{project.title || '项目'}}</view>
+        <text class="tag st-{{project.status}}">{{stLabel}}</text>
+      </view>
+      <view class="muted" wx:if="{{project.created_by}}">立项：{{project.created_by}} · {{project.created_at}}</view>
+      <view class="field" style="margin-top:16rpx">
+        <view class="field-label">标题</view>
+        <input class="input" value="{{title}}" bindinput="onTitle" placeholder-class="ph" />
+      </view>
+      <view class="field">
+        <view class="field-label">制片提示词（改完记得保存，下一轮步骤按新词跑）</view>
+        <textarea class="textarea" value="{{brief}}" bindinput="onBrief" maxlength="4000" auto-height placeholder-class="ph" />
+      </view>
+      <view class="row">
+        <button class="btn-sm approve" wx:if="{{canWrite}}" bindtap="saveMeta">保存</button>
+        <button class="btn-sm btn-plain" wx:if="{{canWrite}}" bindtap="archiveTap">归档</button>
+        <view class="grow"></view>
+        <text class="link" bindtap="reload">刷新</text>
+      </view>
+    </view>
+
+    <!-- 素材区 -->
+    <view class="card">
+      <view class="sec-head">
+        <view class="sec-title">工作区素材</view>
+        <view class="sec-cap">{{assets.length}} 张 · 加图后重跑步骤即生效</view>
+      </view>
+      <view class="mat-row">
+        <view class="mat-cell" wx:for="{{assets}}" wx:key="key">
+          <image class="mat-thumb" src="{{item._url}}" mode="aspectFill" />
+          <view class="mat-spin" wx:if="{{item.uploading}}">上传中</view>
+          <view class="mat-del" catchtap="delAsset" data-i="{{index}}">✕</view>
+          <view class="asset-kind" wx:if="{{item.kind === 'charref'}}">定妆</view>
+        </view>
+        <view class="mat-cell" wx:if="{{canWrite}}">
+          <view class="mat-add" bindtap="pickImages">＋<text class="mat-add-t">图</text></view>
+        </view>
+      </view>
+      <view class="field-help">人物镜头自动使用辣条妹三视图/特写做 happyhorse 参考；这里传的是本项目自己的实拍素材。</view>
+    </view>
+
+    <!-- 跑一步 -->
+    <view class="card" wx:if="{{canWrite}}">
+      <view class="sec-head">
+        <view class="sec-title">跑一步</view>
+        <view class="sec-cap">每跑一轮留一条记录，不满意就改了再跑</view>
+      </view>
+      <view class="field">
+        <view class="field-label">本轮附加指令（选填）</view>
+        <textarea class="textarea small" placeholder="例：开场改成锅铲特写；语气再毒一点；第 3 镜换成河坊街"
+                  placeholder-class="ph" value="{{stepPrompt}}" bindinput="onStepPrompt" auto-height />
+      </view>
+      <view class="field">
+        <view class="field-label">出片引擎（只影响「出成片」）</view>
+        <view class="rd-row">
+          <view class="rd {{renderer === 'hyperframes' ? 'on' : ''}}" bindtap="pickRenderer" data-r="hyperframes">
+            <view class="rd-name">HyperFrames 图文卡</view>
+            <view class="rd-tip">字卡+旁白+Ken Burns，快</view>
+          </view>
+          <view class="rd {{renderer === 'openmontage' ? 'on' : ''}}" bindtap="pickRenderer" data-r="openmontage">
+            <view class="rd-name">OpenMontage 动态剪辑</view>
+            <view class="rd-tip">逐镜 AI 真动效+配乐，无字卡，慢且烧配额</view>
+          </view>
+        </view>
+      </view>
+      <view class="row run-row">
+        <button class="btn-sm btn-plain grow gap" loading="{{busyKind === 'storyboard'}}" bindtap="runStep" data-kind="storyboard">① 出分镜</button>
+        <button class="btn-sm btn-plain grow gap" loading="{{busyKind === 'video'}}" bindtap="runStep" data-kind="video">② 出成片</button>
+        <button class="btn-sm btn-plain grow" loading="{{busyKind === 'copy'}}" bindtap="runStep" data-kind="copy">③ 出平台文案</button>
+      </view>
+      <view class="muted flow-tip center">出成片前先在时间线里确认/手改一版分镜，点「用这版出成片」更稳。</view>
+    </view>
+
+    <!-- 步骤时间线 -->
+    <view class="card">
+      <view class="sec-head">
+        <view class="sec-title">步骤记录</view>
+        <view class="sec-cap">新在前</view>
+      </view>
+      <view class="empty" wx:if="{{loading && !steps.length}}">加载中…</view>
+      <view class="empty" wx:elif="{{!steps.length}}">还没跑过任何一步——上面「出分镜」开第一枪</view>
+      <view class="pstep" wx:for="{{steps}}" wx:key="id">
+        <view class="row-between">
+          <view class="row">
+            <text class="tag kind-{{item.kind}}">{{item.kind_label}}</text>
+            <text class="tag ts-{{item.status}}">{{item._ts}}</text>
+            <text class="tag eng" wx:if="{{item._engine}}">{{item._engine === 'openmontage' ? 'OpenMontage' : 'HyperFrames'}}</text>
+          </view>
+          <text class="muted">{{item._time}}</text>
+        </view>
+        <view class="muted" wx:if="{{item.prompt}}">指令：{{item.prompt}}</view>
+        <view class="muted" wx:if="{{item.note}}">{{item.note}}</view>
+        <view class="muted err" wx:if="{{item.error}}">失败：{{item.error}}</view>
+
+        <!-- 分镜：可看/可改/可指定出片 -->
+        <view class="w-ops" wx:if="{{item.kind === 'storyboard' && item.status === 'done'}}">
+          <text class="chip" bindtap="openSb" data-id="{{item.id}}">看/改分镜{{item._scenes ? '（' + item._scenes + ' 镜）' : ''}}</text>
+          <text class="chip" wx:if="{{canWrite}}" bindtap="videoFromSb" data-id="{{item.id}}">用这版出成片</text>
+        </view>
+        <!-- 成片：内嵌预览 -->
+        <block wx:if="{{item.kind === 'video' && item._video}}">
+          <video class="st-video" src="{{item._video}}" object-fit="contain" show-center-play-btn controls />
+          <view class="w-ops">
+            <text class="chip" bindtap="copyVideoUrl" data-url="{{item._video}}">复制下载链接</text>
+            <text class="chip" bindtap="goReview">去待放行 ›</text>
+          </view>
+        </block>
+        <!-- 平台文案稿 -->
+        <view class="w-ops" wx:if="{{item.kind === 'copy' && item._items.length}}">
+          <text class="chip" bindtap="goReview">{{item._items.length}} 条平台稿待审 ›</text>
+        </view>
+        <view class="w-ops" wx:if="{{canWrite && (item.status === 'failed' || item.status === 'skipped')}}">
+          <text class="chip" bindtap="retryStep" data-id="{{item.id}}">重跑这一步</text>
+        </view>
+        <view class="w-ops" wx:if="{{canWrite && item.status === 'done' && item.kind !== 'storyboard'}}">
+          <text class="chip" bindtap="retryStep" data-id="{{item.id}}">按同样指令再跑一版</text>
+        </view>
+      </view>
+    </view>
+  </block>
+
+  <!-- 分镜弹层：查看 / 手改 JSON -->
+  <view class="mask" wx:if="{{sbVisible}}" bindtap="closeSb">
+    <view class="sheet" catchtap="noop">
+      <view class="row-between sheet-head">
+        <view class="title">分镜脚本</view>
+        <view class="muted" bindtap="closeSb">关闭</view>
+      </view>
+      <scroll-view scroll-y class="sheet-body">
+        <textarea class="textarea sb-area" value="{{sbText}}" bindinput="onSbInput" auto-height
+                  maxlength="-1" disabled="{{sbReadonly}}" />
+        <view class="muted flow-tip">改字段就行（title/sub/vo/dur/img/hh…），保存后点「用这版出成片」。</view>
+      </scroll-view>
+      <view class="row sheet-foot" wx:if="{{!sbReadonly}}">
+        <button class="btn-plain grow gap" bindtap="closeSb">取消</button>
+        <button class="btn grow" bindtap="saveSb">保存分镜</button>
+      </view>
+    </view>
+  </view>
+</view>

@@ -1,0 +1,21 @@
+[Unit]
+Description=辣条妹内容流水线 worker（AI 产草稿 / hyperframes 渲染抖音视频 / 公众号 / 订阅推送）
+After=network-online.target latiaomei.service
+Wants=latiaomei.service
+
+[Service]
+Type=simple
+WorkingDirectory=/data/www/latiaomei/tools/pipeline
+ExecStart=/usr/local/nodejs/bin/node /data/www/latiaomei/tools/pipeline/worker.js
+Environment=TMPDIR=/data/tmp/hf
+Environment=NODE_OPTIONS=--max-old-space-size=512
+Restart=always
+RestartSec=30
+# 渲染吃内存，权重压低一点，跟主站抢不过就让路
+Nice=10
+MemoryMax=1200M
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,24 @@
+<view class="wrap" wx:if="{{shop}}">
+  <image class="s-cover" src="{{shop.cover}}" mode="aspectFill" wx:if="{{shop.cover}}" />
+  <view class="s-card pcard rise">
+    <view class="s-name">{{shop.name}}</view>
+    <view class="muted s-sub">{{shop.city}} {{shop.district}} · {{shop.cuisine}}{{shop.avgPrice ? ' · ' + shop.avgPrice : ''}}</view>
+    <view class="muted" wx:if="{{shop.address}}">{{shop.address}}</view>
+    <view class="muted" wx:if="{{shop.hours}}">营业：{{shop.hours}}</view>
+    <view class="s-stats">
+      <view class="st"><text class="st-n">{{reviews.length}}</text><text class="st-l">被判过</text></view>
+      <view class="st"><text class="st-n acid">{{shop.hangCnt}}</text><text class="st-l">夯</text></view>
+      <view class="st"><text class="st-n red">{{shop.laCnt}}</text><text class="st-l">拉完了</text></view>
+      <view class="st"><text class="st-n">{{shop.avgScore}}</text><text class="st-l">平均分</text></view>
+    </view>
+    <view class="s-best" wx:if="{{shop.bestDish}}">招牌判定：<text class="hl">{{shop.bestDish}}</text></view>
+    <view class="s-note" wx:if="{{shop.note}}">{{shop.note}}</view>
+  </view>
+
+  <view class="s-douyin rise rise-1" wx:if="{{shop.douyinUrl}}" bindtap="copyDouyin" hover-class="p-press">📕 她在抖音发过这家 · 复制链接去抖音看</view>
+
+  <view class="sect-hd"><text class="t">这家店的判定</text><view class="ln"></view></view>
+  <review-card wx:for="{{reviews}}" wx:key="slug" review="{{item}}" tiers="{{tiers}}" />
+  <view class="empty" wx:if="{{!reviews.length}}">还没判过这家的菜，先记上</view>
+</view>
+<view class="empty" wx:elif="{{!loading}}">还没有这家店的档案</view>

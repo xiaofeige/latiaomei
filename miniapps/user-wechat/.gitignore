@@ -1,0 +1,6 @@
+# 密钥文件勿入库
+private.*.key
+qr-*.png
+ci/node_modules
+.env
+wx.conf

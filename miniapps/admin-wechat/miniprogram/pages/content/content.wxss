@@ -1,0 +1,11 @@
+.ct { display: flex; flex-direction: column; height: 100vh; background: var(--bg); }
+
+/* 分段条：选中整块反色，和 rank-admin 工具行同一控件语言 */
+.ct-seg { display: flex; background: #fff; border-bottom: 1rpx solid var(--line); flex-shrink: 0; }
+.ct-seg-i {
+  flex: 1; text-align: center; padding: 24rpx 0; font-size: 30rpx; color: var(--ink-soft);
+  position: relative;
+}
+.ct-seg-i.on { background: var(--ink); color: #f4e8d0; font-weight: 600; }
+
+.ct-body { flex: 1; min-height: 0; }

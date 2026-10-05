@@ -1,0 +1,6 @@
+{
+  "navigationBarTitleText": "店铺档案",
+  "usingComponents": {
+    "review-card": "/components/review-card/index"
+  }
+}

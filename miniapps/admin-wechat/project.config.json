@@ -1,0 +1,32 @@
+{
+  "appid": "wx38c2602fd29699b1",
+  "projectname": "latiaomei-admin",
+  "description": "辣条妹的御膳房 · 管理后台小程序",
+  "miniprogramRoot": "miniprogram/",
+  "compileType": "miniprogram",
+  "libVersion": "3.5.5",
+  "setting": {
+    "urlCheck": true,
+    "es6": true,
+    "enhance": true,
+    "postcss": true,
+    "minified": true,
+    "bundle": false,
+    "useIsolateContext": true,
+    "coverView": true,
+    "nodeModules": false,
+    "checkInvalidKey": true,
+    "checkSiteMap": true,
+    "uploadWithSourceMap": true,
+    "ignoreDevUnusedFiles": false
+  },
+  "condition": {
+    "miniprogram": {
+      "list": [
+        { "name": "登录页", "pathName": "pages/login/login", "query": "", "scene": null },
+        { "name": "概览", "pathName": "pages/dashboard/dashboard", "query": "", "scene": null },
+        { "name": "写点评", "pathName": "pages/review-edit/review-edit", "query": "", "scene": null }
+      ]
+    }
+  }
+}

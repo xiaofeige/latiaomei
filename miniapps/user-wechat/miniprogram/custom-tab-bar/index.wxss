@@ -1,0 +1,100 @@
+/* 自定义 tab bar：可视区总高 176rpx，再加一条安全区（安全区也在黑底之内）。
+   页面里的吸底元素按 bottom: calc(176rpx + env(safe-area-inset-bottom)) 让位，
+   算出来的正好是 bar 顶沿 —— C 位 logo 顶 = 输入框底，严丝合缝。
+   顶部 60rpx 用不透明纸色（= 输入框/页面底色）铺死，logo 左右不漏背景，
+   视觉上输入条 → 纸色带 → 翘起头像连成一片，黑底板从 60rpx 起。 */
+.bar {
+  position: relative;
+  height: calc(176rpx + env(safe-area-inset-bottom));
+  padding-bottom: env(safe-area-inset-bottom);
+  background: #fff6e8; /* 上面的颜色（纸色）填平，不透底 */
+}
+.bg {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 60rpx;
+  bottom: 0;
+  background: #1c1712;
+  border-top: 2rpx solid rgba(255, 255, 255, .07);
+  box-shadow: 0 -12rpx 40rpx rgba(28, 23, 18, .18);
+}
+
+.row {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  height: 100%;
+}
+.grp {
+  flex: 1;
+  display: flex;
+  padding-top: 86rpx;
+  min-width: 0;
+}
+.grp .tab {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2rpx;
+  opacity: .62;
+}
+.grp .ic { font-size: 32rpx; line-height: 1.1; }
+.grp .tt { font-size: 20rpx; font-weight: 800; color: #a89f8f; letter-spacing: 1rpx; }
+.grp .tab.on { opacity: 1; }
+.grp .tab.on .tt { color: #ff5a1f; }
+.press { transform: scale(.94); }
+
+.hero {
+  width: 200rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+/* margin-top 归零：logo 顶沿贴住 tab bar 顶沿（= 输入框底沿） */
+.ring {
+  position: relative;
+  width: 108rpx;
+  height: 108rpx;
+  margin-top: 0;
+  border-radius: 50%;
+  background: #221d17;
+  border: 5rpx solid #4a4238;
+  box-shadow: 0 0 0 6rpx rgba(53, 208, 192, .12), 0 10rpx 30rpx rgba(0, 0, 0, .45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  transition: border-color .2s;
+}
+.ring.lit {
+  border-color: #35d0c0;
+  box-shadow: 0 0 0 6rpx rgba(53, 208, 192, .14), 0 0 24rpx rgba(53, 208, 192, .22);
+}
+.face { width: 92rpx; height: 92rpx; border-radius: 50%; }
+.dot {
+  position: absolute;
+  right: 0;
+  top: 4rpx;
+  width: 22rpx;
+  height: 22rpx;
+  border-radius: 50%;
+  background: #52b788;
+  border: 4rpx solid #1c1712;
+  box-sizing: border-box;
+  animation: breath 1.6s ease-in-out infinite;
+}
+@keyframes breath {
+  0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(82, 183, 136, .4); }
+  50% { transform: scale(.72); opacity: .85; box-shadow: 0 0 0 8rpx rgba(82, 183, 136, 0); }
+}
+.hero-tt {
+  /* 15rpx：108（头像）+15+32（字高）≈ 155，与两侧 tab 文字底沿（86+35+2+32≈155）齐平 */
+  margin-top: 15rpx;
+  font-size: 20rpx;
+  font-weight: 900;
+  letter-spacing: 2rpx;
+  color: #a89f8f;
+}
+.hero-tt.on { color: #35d0c0; }

@@ -1,0 +1,32 @@
+/* 店铺档案（二级页）。原来挂在店铺 Tab 上的样式，随页面迁移重建。 */
+.topbar { position: sticky; top: 0; z-index: 10; background: var(--bg); padding: 16rpx 24rpx 8rpx; }
+
+.searchbar { display: flex; align-items: center; margin-bottom: 12rpx; }
+.search-input { flex: 1; background: #fff; border: 1rpx solid var(--line); border-radius: 12rpx; padding: 14rpx 20rpx; font-size: 26rpx; }
+.clear { margin-left: 12rpx; padding: 8rpx 16rpx; color: var(--ink-soft); font-size: 28rpx; }
+
+.sorts { display: flex; }
+.sort { padding: 8rpx 26rpx; margin-right: 12rpx; font-size: 25rpx; color: var(--ink-soft); background: #fff; border-radius: 26rpx; }
+.sort.on { background: var(--ink); color: #fff; }
+
+.list { padding: 16rpx 24rpx 140rpx; }
+
+.shop { padding: 24rpx; }
+.shop-head { display: flex; }
+.shop-cover { width: 140rpx; height: 140rpx; border-radius: 14rpx; flex-shrink: 0; margin-right: 20rpx; background: #efe9dc; }
+.shop-cover.ph { display: flex; align-items: center; justify-content: center; color: var(--ink-soft); font-size: 22rpx; }
+.shop-info { flex: 1; min-width: 0; }
+.shop-name { font-size: 30rpx; font-weight: 600; margin-bottom: 6rpx; }
+.shop-nums { display: flex; flex-wrap: wrap; gap: 14rpx; margin-top: 10rpx; font-size: 22rpx; color: var(--ink-soft); }
+.n-hang { color: var(--gold); }
+.n-la { color: #a0503c; }
+
+.shop-actions { display: flex; flex-wrap: wrap; gap: 14rpx; border-top: 1rpx solid var(--line); margin-top: 18rpx; padding-top: 16rpx; }
+.act { font-size: 26rpx; color: var(--ink-soft); background: #f2ede2; border-radius: 10rpx; padding: 10rpx 26rpx; }
+.act.danger { color: #a0503c; }
+
+.loadmore { text-align: center; padding: 24rpx 0; font-size: 24rpx; }
+
+.fab { position: fixed; right: 40rpx; bottom: 60rpx; width: 108rpx; height: 108rpx; line-height: 104rpx;
+  text-align: center; border-radius: 50%; background: var(--gold); color: #fff; font-size: 56rpx;
+  box-shadow: 0 8rpx 24rpx rgba(181, 143, 74, 0.45); }

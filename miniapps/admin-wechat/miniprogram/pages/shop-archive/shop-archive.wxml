@@ -1,0 +1,42 @@
+<view class="topbar">
+  <ro-banner wx:if="{{!canWrite}}" text="只读模式：可以查看店铺档案，不能新建或修改。"></ro-banner>
+  <view class="searchbar">
+    <input class="search-input" placeholder="搜店名 / 城市 / 菜系" value="{{q}}"
+           confirm-type="search" bindconfirm="onSearch" bindinput="onQ" />
+    <view class="clear" wx:if="{{q}}" bindtap="onClear">✕</view>
+  </view>
+  <view class="sorts">
+    <view class="sort {{sort === item.v ? 'on' : ''}}" wx:for="{{sortTabs}}" wx:key="v"
+          bindtap="onSort" data-v="{{item.v}}">{{item.t}}</view>
+  </view>
+</view>
+
+<view class="list">
+  <view class="shop card" wx:for="{{items}}" wx:key="id">
+    <view class="shop-head" bindtap="edit" data-id="{{item.id}}">
+      <image wx:if="{{item._cover}}" class="shop-cover" src="{{item._cover}}" mode="aspectFill" />
+      <view wx:else class="shop-cover ph">无图</view>
+      <view class="shop-info">
+        <view class="shop-name">{{item.name}}</view>
+        <view class="muted">{{item.city}}<text wx:if="{{item.district}}"> · {{item.district}}</text><text wx:if="{{item.cuisine}}"> · {{item.cuisine}}</text></view>
+        <view class="muted" wx:if="{{item.address}}">{{item.address}}</view>
+        <view class="shop-nums">
+          <text>点评 {{item.review_count}}</text>
+          <text class="n-hang">夯 {{item.hang_count}}</text>
+          <text class="n-la">拉 {{item.la_count}}</text>
+          <text wx:if="{{item.avg_price}}">人均 ¥{{item.avg_price}}</text>
+        </view>
+      </view>
+    </view>
+    <view class="shop-actions" wx:if="{{canWrite}}">
+      <view class="act" bindtap="edit" data-id="{{item.id}}">编辑</view>
+      <view class="act" bindtap="viewReviews" data-name="{{item.name}}">看它的点评</view>
+      <view class="act danger" bindtap="remove" data-id="{{item.id}}" data-name="{{item.name}}">删除</view>
+    </view>
+  </view>
+
+  <view class="empty" wx:if="{{!loading && !items.length}}">还没有店铺档案</view>
+  <view class="loadmore muted" wx:if="{{items.length}}">{{hasMore ? '上拉加载更多' : '— 到底了 —'}}</view>
+</view>
+
+<view class="fab" wx:if="{{canWrite}}" bindtap="create">＋</view>

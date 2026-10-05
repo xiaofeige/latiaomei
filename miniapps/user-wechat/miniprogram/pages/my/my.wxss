@@ -1,0 +1,50 @@
+/* 辣条妹 IP 专场：海报卡 + 战绩带 + 江湖入口，全套 web 站波普语言 */
+.ip {
+  background: linear-gradient(150deg, #2c231a, #1a140e); border-radius: 28rpx; padding: 36rpx 30rpx 40rpx; text-align: center;
+  box-shadow: 10rpx 10rpx 0 rgba(255, 197, 61, .22); position: relative; overflow: hidden;
+}
+.ip-k { font-size: 18rpx; letter-spacing: 4rpx; font-weight: 900; color: #ffc53d; }
+.ip-hero { width: 340rpx; height: 440rpx; display: block; margin: 6rpx auto 0; }
+.ip-name { font-size: 64rpx; font-weight: 900; color: #fff; letter-spacing: -2rpx; line-height: 1.1; text-shadow: 8rpx 8rpx 0 #ff5a1f; margin-top: 10rpx; }
+.ip-handle { font-size: 22rpx; font-weight: 800; color: #a29a8c; margin-top: 10rpx; }
+.ip-quote {
+  display: inline-block; margin-top: 18rpx; font-size: 24rpx; font-weight: 900; color: #111;
+  background: #ffc53d; border: 5rpx solid #111; padding: 8rpx 24rpx; border-radius: 14rpx; transform: rotate(-2deg);
+}
+.ip-tg { display: inline-block; margin-top: 14rpx; font-size: 22rpx; font-weight: 900; color: #111; background: linear-gradient(90deg, #ffc53d, #ffdf8a); border: 4rpx solid #111; border-radius: 999rpx; padding: 6rpx 22rpx; transform: rotate(1deg); }
+.ip-fans { font-size: 20rpx; font-weight: 800; color: #a29a8c; margin-top: 16rpx; }
+.ip-fans .fn { color: #ffc53d; font-size: 26rpx; font-weight: 900; }
+
+/* 战绩带 */
+.me-stats { display: flex; background: #fffdf6; border: 5rpx solid #111; border-radius: 24rpx; padding: 26rpx 0; margin-top: 26rpx; box-shadow: 8rpx 8rpx 0 rgba(0, 0, 0, .14); }
+.st { flex: 1; display: flex; flex-direction: column; align-items: center; }
+.st-n { font-size: 42rpx; font-weight: 900; line-height: 1.1; color: #111; }
+.st-n.acid { color: #9ab500; }
+.st-n.pink { color: #ff6d8f; }
+.st-n.cyan { color: #00a8bd; }
+.st-l { font-size: 20rpx; font-weight: 800; color: #7c7568; margin-top: 6rpx; }
+
+/* 江湖入口 */
+.me-row {
+  display: flex; align-items: center; background: #fffdf6; border: 5rpx solid #111; border-radius: 22rpx;
+  padding: 22rpx 26rpx; margin-top: 20rpx; box-shadow: 8rpx 8rpx 0 rgba(0, 0, 0, .14);
+}
+.me-ic { font-size: 40rpx; margin-right: 20rpx; }
+.me-tx { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.me-tx .tt { font-size: 30rpx; font-weight: 900; color: #111; }
+.me-tx .dd { font-size: 20rpx; font-weight: 700; color: #7c7568; margin-top: 4rpx; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.me-a { color: #111; font-size: 36rpx; font-weight: 900; }
+
+/* 安利大按钮 */
+.ip-share {
+  margin-top: 30rpx; background: #ffc53d; color: #111; font-size: 30rpx; font-weight: 900;
+  border: 5rpx solid #111; border-radius: 999rpx; padding: 20rpx 0; line-height: 1.4;
+  box-shadow: 8rpx 8rpx 0 rgba(0, 0, 0, .2);
+}
+.ip-share::after { border: none; }
+.ip-share:active { transform: translate(4rpx, 4rpx); box-shadow: 4rpx 4rpx 0 rgba(0, 0, 0, .2); }
+
+.me-foot { text-align: center; margin-top: 36rpx; }
+
+/* 自定义 tab bar 是悬浮层，页面不自动留位：底部多留 176rpx+安全区 */
+.wrap { padding-bottom: calc(240rpx + env(safe-area-inset-bottom)); }

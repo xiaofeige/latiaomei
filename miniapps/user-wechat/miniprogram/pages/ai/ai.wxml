@@ -1,0 +1,278 @@
+<view class="page">
+
+  <!-- 顶部：辣条妹本人在线（AI 是她脑子里的事，用户不需要知道）。整条吸顶：右边三颗胶囊固定不压缩 —— 📍定位 / 🌶档案 / ＋新会话（常驻） -->
+  <view class="hd-wrap">
+    <view class="hd">
+      <view class="hd-av">
+        <image src="/images/latiaomei-hero.svg" mode="aspectFit" class="hd-face" />
+        <view class="hd-dot"></view>
+      </view>
+      <view class="hd-tx">
+        <view class="hd-t">辣条妹 · 本人在线</view>
+        <view class="hd-s">{{locOn ? '📍 定位已开 · 先紧着你附近的推' : '杭州十年 · 只恰真的 · 帮你排好每一餐'}}</view>
+      </view>
+      <!-- 三颗统一成同形胶囊：图标 + 文字。主操作「新会话」用 CSS 画的粗＋（不用 ↺/⊕ 这类“重启”含义的符号） -->
+      <view class="hd-btns">
+        <view class="hbtn {{locOn ? 'on' : ''}}" bindtap="tapLoc" hover-class="press">
+          <text class="hb-ic">📍</text><text class="hb-t">定位</text>
+        </view>
+        <view class="hbtn" bindtap="openPrefs" hover-class="press">
+          <text class="hb-ic">🌶</text><text class="hb-t">档案</text>
+        </view>
+        <view class="hbtn new {{msgs.length ? '' : 'off'}}" bindtap="tapReset" hover-class="press">
+          <view class="plus"></view><text class="hb-t">新会话</text>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 空态：第一次来，先把人设立住，再递话头 -->
+  <view class="intro" wx:if="{{!msgs.length}}" style="{{padH ? 'padding-bottom:' + padH + 'px' : ''}}">
+    <view class="hi rise">
+      <view class="hi-bub">
+        <view>哟，新面孔？我是<text class="b">辣条妹</text>，在杭州吃了十年，只恰真的。</view>
+        <view>想吃啥、怎么玩、能不能辣，跟我说，</view>
+        <view><text class="b">你的每一餐，我给你安排得明明白白。</text></view>
+      </view>
+      <view class="hi-tags">
+        <text class="hi-tag">🗓 美食规划</text><text class="hi-tag">🥗 健康餐</text><text class="hi-tag">🍢 放纵餐</text><text class="hi-tag">📍 附近严选</text><text class="hi-tag">🔍 鉴店防翻车</text>
+      </view>
+    </view>
+    <view class="qtitle rise rise-1">试试直接问我</view>
+    <view class="qgrid">
+      <view class="qcard rise rise-{{index + 1}}" wx:for="{{quicks}}" wx:key="t" data-i="{{index}}" bindtap="tapQuick" hover-class="qpress">
+        <text class="q-e">{{item.e}}</text>
+        <view class="q-body">
+          <view class="q-t">{{item.t}}</view>
+          <view class="q-d">{{item.d}}</view>
+        </view>
+        <text class="q-go">›</text>
+      </view>
+    </view>
+    <view class="qfoot rise rise-5">
+      <text class="qfoot-t">还是选择困难？</text>
+      <view class="qfoot-b" bindtap="goWheel" hover-class="press">去「恰啥」转一下 🎡</view>
+    </view>
+  </view>
+
+  <!-- 消息流 -->
+  <view class="msgs">
+    <block wx:for="{{msgs}}" wx:key="id" wx:for-index="mi" wx:for-item="msg">
+      <view id="m-{{msg.id}}" class="row {{msg.role}}">
+
+        <!-- 用户 -->
+        <view class="me-bub" wx:if="{{msg.role === 'me'}}">{{msg.text}}</view>
+
+        <!-- 辣条妹 -->
+        <block wx:else>
+          <view class="ai-av"><image src="/images/latiaomei-hero.svg" mode="aspectFit" /></view>
+          <view class="ai-col">
+
+            <!-- 思考中 -->
+            <view class="bub load" wx:if="{{msg.load}}">
+              <view class="dots"><view class="d"></view><view class="d"></view><view class="d"></view></view>
+              <text class="load-t">辣条妹正在翻她的店档…</text>
+            </view>
+
+            <!-- 出错 -->
+            <view class="bub errb" wx:elif="{{msg.bad}}">
+              <view class="err-t">哎呀，我这边信号断了（{{msg.err}}）</view>
+              <view class="err-b" wx:if="{{mi === msgs.length - 1}}" data-id="{{msg.id}}" bindtap="retry" hover-class="press">再问一次 ↻</view>
+            </view>
+
+            <!-- 正常回答 -->
+            <block wx:else>
+              <view class="think" wx:if="{{msg.thinking}}" data-mi="{{mi}}" bindtap="toggleThink" hover-class="press">
+                <text class="th-ic">🧠</text>
+                <text class="th-t {{msg._thOpen ? 'open' : ''}}">{{msg.thinking}}</text>
+                <text class="th-x">{{msg._thOpen ? '收起' : '展开'}}</text>
+              </view>
+
+              <block wx:for="{{msg.blocks}}" wx:key="index" wx:for-index="bi" wx:for-item="blk">
+
+                <view class="bub text" wx:if="{{blk.type === 'text'}}">
+                  <view class="ln" wx:for="{{blk._lines}}" wx:key="index" wx:for-item="line">
+                    <text wx:for="{{line.runs}}" wx:key="index" wx:for-item="run" class="{{run.b ? 'b' : ''}}">{{run.t}}</text>
+                  </view>
+                </view>
+
+                <view class="blk ask" wx:elif="{{blk.type === 'ask'}}">
+                  <view class="ask-q">{{blk.q}}</view>
+                  <view class="ask-opts">
+                    <view class="ask-o {{blk._sel[oi] ? 'on' : ''}}" wx:for="{{blk.options}}" wx:key="label" wx:for-index="oi"
+                      data-mi="{{mi}}" data-bi="{{bi}}" data-oi="{{oi}}" bindtap="tapOption" hover-class="qpress">
+                      <text class="ao-e">{{item.emoji}}</text>
+                      <view class="ao-tx">
+                        <view class="ao-l">{{item.label}}</view>
+                        <view class="ao-d" wx:if="{{item.desc}}">{{item.desc}}</view>
+                      </view>
+                      <view class="ao-mark">{{blk.multi ? (blk._sel[oi] ? '✓' : '○') : (blk._sel[oi] ? '●' : '○')}}</view>
+                    </view>
+                  </view>
+                  <view class="ask-go" data-mi="{{mi}}" data-bi="{{bi}}" bindtap="submitAsk" hover-class="press">就这些，发给辣条妹 →</view>
+                </view>
+
+                <view class="blk shops" wx:elif="{{blk.type === 'shops'}}">
+                  <view class="sh-title" wx:if="{{blk.title}}">🌶 {{blk.title}}</view>
+                  <view class="sh-card" wx:for="{{blk.items}}" wx:key="slug" data-slug="{{item.slug}}" bindtap="tapShop" hover-class="qpress">
+                    <view class="sh-ph">
+                      <image class="sh-img" src="{{item._cover}}" mode="aspectFill" lazy-load />
+                      <view class="vc t-{{item.tier}}">{{item.tier_label}}</view>
+                    </view>
+                    <view class="sh-main">
+                      <view class="sh-dish">{{item.dish}}</view>
+                      <view class="sh-shop">{{item.shop}}{{item.district ? ' · ' + item.district : ''}}{{item.dist ? ' · ' + item.dist : ''}}</view>
+                      <view class="sh-why" wx:if="{{item.why}}">{{item.why}}</view>
+                      <view class="sh-meta">
+                        <text class="sh-score">{{item.score}}分</text>
+                        <text class="sh-price" wx:if="{{item.price}}">人均¥{{item.price}}</text>
+                        <text class="sh-kind">{{item.kind_label}}</text>
+                      </view>
+                    </view>
+                  </view>
+                </view>
+
+                <view class="blk plan" wx:elif="{{blk.type === 'plan'}}">
+                  <view class="pl-hd">
+                    <text class="pl-ic">🗓</text>
+                    <text class="pl-t">{{blk.title || '辣条妹排餐计划'}}</text>
+                  </view>
+                  <view class="pl-day" wx:for="{{blk.days}}" wx:key="day" wx:for-item="day">
+                    <view class="pl-dl">{{day.label}}</view>
+                    <view class="tl" wx:for="{{day.meals}}" wx:key="index" wx:for-item="meal">
+                      <view class="tl-time">
+                        <text class="tl-slot">{{meal.slot}}</text>
+                        <text class="tl-clk" wx:if="{{meal.time}}">{{meal.time}}</text>
+                      </view>
+                      <view class="tl-rail"><view class="tl-dot"></view></view>
+                      <view class="tl-body" wx:if="{{meal.shop}}" data-slug="{{meal.shop.slug}}" bindtap="tapShop" hover-class="qpress">
+                        <view class="tl-title">{{meal.title}}</view>
+                        <view class="tl-why" wx:if="{{meal.why}}">{{meal.why}}</view>
+                        <view class="tl-shop">{{meal.shop.shop}}{{meal.shop.district ? ' · ' + meal.shop.district : ''}}{{meal.shop.dist ? ' · ' + meal.shop.dist : ''}}</view>
+                      </view>
+                      <view class="tl-body" wx:else>
+                        <view class="tl-title">{{meal.title}}</view>
+                        <view class="tl-why" wx:if="{{meal.why}}">{{meal.why}}</view>
+                      </view>
+                    </view>
+                  </view>
+                </view>
+
+                <view class="blk tips" wx:elif="{{blk.type === 'tips'}}">
+                  <view class="tp-hd" wx:if="{{blk.title}}">{{blk.title}}</view>
+                  <view class="tp-i" wx:for="{{blk.items}}" wx:key="t"><text class="tp-c">✓</text><text>{{item.t}}</text></view>
+                </view>
+
+                <!-- 鉴店判决书：店靠不靠谱/会不会翻车，中立第三方判决 -->
+                <view class="blk vrd lv-{{blk.level}}" wx:elif="{{blk.type === 'verdict'}}">
+                  <view class="vrd-top">
+                    <view class="vrd-badge">{{blk._lab}}</view>
+                    <view class="vrd-name {{blk.slug ? 'link' : ''}}" wx:if="{{blk.slug}}" data-slug="{{blk.slug}}" bindtap="tapShop" hover-class="qpress">🔍 鉴店 · {{blk.shop}}{{blk.tier_label ? '（辣条妹判：' + blk.tier_label + '）' : ''}} ›</view>
+                    <view class="vrd-name" wx:else>🔍 鉴店 · {{blk.shop}}</view>
+                    <view class="vrd-score" wx:if="{{blk.score}}">{{blk.score}}<text class="vrd-score-u">/10</text></view>
+                  </view>
+                  <view class="vrd-judge" wx:if="{{blk.judge}}">「{{blk.judge}}」</view>
+                  <view class="vrd-sigs">
+                    <view class="vrd-sig" wx:for="{{blk.signals}}" wx:key="k">
+                      <text class="vrd-ic">{{item.good === 1 ? '✅' : (item.good === -1 ? '⚠️' : '➖')}}</text>
+                      <view class="vrd-stx"><text class="vrd-sk">{{item.k}}</text><text class="vrd-sv">{{item.v}}</text></view>
+                    </view>
+                  </view>
+                  <view class="vrd-plat" wx:if="{{blk.platforms.length}}">
+                    <view class="vrd-pt">平台风评盘点</view>
+                    <view class="vrd-prow" wx:for="{{blk.platforms}}" wx:key="k">
+                      <text class="vrd-pn">{{item.k}}</text>
+                      <text class="vrd-pic">{{item.good === 1 ? '💚' : (item.good === -1 ? '💢' : '〰️')}}</text>
+                      <text class="vrd-pv">{{item.v}}</text>
+                    </view>
+                  </view>
+                  <view class="vrd-adv" wx:if="{{blk.advice}}">🌶 辣条妹支招：{{blk.advice}}</view>
+                </view>
+
+                <view class="blk acts" wx:elif="{{blk.type === 'actions'}}">
+                  <view class="act" wx:for="{{blk.items}}" wx:key="label" data-kind="{{item.kind}}" data-value="{{item.value}}"
+                    bindtap="tapAction" hover-class="press">{{item.label}}</view>
+                </view>
+              </block>
+
+              <!-- 追问气泡：只在最新一条下面给 -->
+              <view class="chips" wx:if="{{msg.chips.length && mi === msgs.length - 1}}">
+                <view class="chip-q" wx:for="{{msg.chips}}" wx:key="*this" data-q="{{item}}" bindtap="tapChip" hover-class="qpress">{{item}}</view>
+              </view>
+            </block>
+          </view>
+        </block>
+      </view>
+    </block>
+    <view class="padbottom" wx:if="{{msgs.length}}" style="{{padH ? 'height:' + padH + 'px' : ''}}"></view>
+  </view>
+
+  <!-- 吸底输入条（给自定义 tab bar 让位）：话筒按住说话 + 多行输入，随内容长高 -->
+  <view class="ibar" id="ibar">
+    <view class="i-mic {{recording ? 'rec' : ''}}" wx:if="{{speechOn}}"
+          bindtouchstart="voiceStart" bindtouchend="voiceEnd" bindtouchcancel="voiceEnd">
+      <text class="mic-ic">🎙</text>
+    </view>
+    <view class="i-box">
+      <textarea class="i-in" value="{{input}}" bindinput="onInput" bindconfirm="sendText" confirm-type="send"
+        placeholder="想吃啥跟我说，比如：明天到杭州玩三天" placeholder-class="i-ph"
+        maxlength="500" auto-height show-confirm-bar="{{false}}" cursor-spacing="24"
+        bindlinechange="onLineChange" bindkeyboardheightchange="onKbChange" bindblur="onKbChange"
+        disable-default-adjust="{{false}}" adjust-position="{{true}}"></textarea>
+    </view>
+    <view class="i-go {{busy || !input ? 'off' : ''}}" bindtap="sendText" hover-class="press">
+      {{busy ? '在想…' : '发送'}}
+    </view>
+  </view>
+
+  <!-- 按住说话浮层：实时转写可见，松手进输入框可改后再发 -->
+  <view class="rec-float" wx:if="{{recording}}">
+    <view class="rec-lab">🎙 正在听你说…松手结束</view>
+    <view class="rec-tx">{{recText || '开口说话，声音大一点'}}</view>
+  </view>
+
+  <!-- 口味档案弹层 -->
+  <view class="mask" wx:if="{{showPrefs}}" bindtap="closePrefs">
+    <view class="sheet" catchtap="noop">
+      <view class="st-hd">
+        <text class="st-t">我的口味档案 🌶</text>
+        <text class="st-x" bindtap="closePrefs">✕</text>
+      </view>
+      <view class="st-sub muted">这些只用来给辣条妹当参考，帮你把每一餐排对口</view>
+
+      <view class="st-lb">能吃辣吗</view>
+      <view class="st-opts">
+        <view class="st-o {{draft.spicy === item.v ? 'on' : ''}}" wx:for="{{spicyOpts}}" wx:key="v" data-k="spicy" data-v="{{item.v}}" bindtap="dPick">{{item.l}}</view>
+      </view>
+
+      <view class="st-lb">你是哪里人（辣条妹好类比口味）</view>
+      <input class="st-in" value="{{draft.hometown}}" data-k="hometown" bindinput="dSet" placeholder="比如：成都 / 北京" placeholder-class="st-ph" maxlength="20" cursor-spacing="160" />
+
+      <view class="st-lb">忌口（选填，逗号分隔）</view>
+      <input class="st-in" value="{{draft.taboo}}" data-k="taboo" bindinput="dSet" placeholder="比如：香菜、内脏、花生" placeholder-class="st-ph" maxlength="60" cursor-spacing="160" />
+
+      <view class="st-lb">人均预算</view>
+      <view class="st-opts">
+        <view class="st-o {{draft.budget === item.v ? 'on' : ''}}" wx:for="{{budgetOpts}}" wx:key="v" data-k="budget" data-v="{{item.v}}" bindtap="dPick">{{item.l}}</view>
+      </view>
+
+      <view class="st-lb">吃的目标</view>
+      <view class="st-opts">
+        <view class="st-o {{draft.goal === item.v ? 'on' : ''}}" wx:for="{{goalOpts}}" wx:key="v" data-k="goal" data-v="{{item.v}}" bindtap="dPick">{{item.l}}</view>
+      </view>
+
+      <view class="st-lb">这趟在杭州待几天（规划餐数用）</view>
+      <view class="st-days">
+        <view class="st-dbtn" data-d="-1" bindtap="dDays" hover-class="press">−</view>
+        <text class="st-dn">{{draft.days || 0}}</text>
+        <view class="st-dbtn" data-d="1" bindtap="dDays" hover-class="press">＋</view>
+        <text class="st-hint muted" wx:if="{{!draft.days}}">0 = 让辣条妹自己看着排</text>
+      </view>
+
+      <view class="st-lb">还有啥要交代的</view>
+      <textarea class="st-ta" value="{{draft.text}}" data-k="text" bindinput="dSet" placeholder="比如：带老人小孩、不能吃牛、只吃得惯老字号…" placeholder-class="st-ph" maxlength="200" auto-height show-confirm-bar="{{false}}" cursor-spacing="160" />
+
+      <view class="st-save" bindtap="savePrefs" hover-class="press">存好档案，找辣条妹开恰 →</view>
+    </view>
+  </view>
+</view>

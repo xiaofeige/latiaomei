@@ -1,0 +1,295 @@
+<view class="wrap">
+  <!-- 顶部页签：待放行带待审角标 -->
+  <view class="tabs big">
+    <view class="tab {{tab === t.code ? 'on' : ''}}" wx:for="{{tabs}}" wx:key="code" wx:for-item="t"
+          bindtap="switchTab" data-code="{{t.code}}">
+      {{t.label}}
+      <text class="dot" wx:if="{{t.code === 'review' && pendingCount}}">{{pendingCount}}</text>
+    </view>
+  </view>
+
+  <!-- 队列水位条：状态数据本体在概览 Tab，这里只留一行入口 -->
+  <view class="qbar" bindtap="goTasks">
+    <text class="qbar-dot {{queue.failed ? 'bad' : (queue.running ? 'run' : '')}}"></text>
+    <text class="qbar-t">队列：排队 {{queue.pending || 0}} · 执行 {{queue.running || 0}} · 失败 {{queue.failed || 0}}</text>
+    <text class="qbar-off" wx:if="{{!workerOn}}">通道未开启</text>
+    <view class="grow"></view>
+    <text class="link">看队列 ›</text>
+  </view>
+
+  <!-- ================= 项目（v13：立项 → 工作区多轮交互 → 分步出片/出文案） ================= -->
+  <block wx:if="{{tab === 'projects'}}">
+    <view class="card">
+      <view class="sec-head">
+        <view class="sec-title">项目制生产</view>
+        <view class="sec-cap">一条视频/一组文案 = 一个项目</view>
+      </view>
+      <view class="muted flow-tip">不再是一键流水线：立项后在工作区里反复加素材、改提示词，分步跑「出分镜 → 手改分镜 → 出成片 → 出平台文案」；人物镜头自动用辣条妹三视图/特写交给 happyhorse 生成动态画面。产物照旧进「待放行」，放行才发布。</view>
+      <button class="btn studio-submit" bindtap="newProject" wx:if="{{canWrite}}">＋ 新建项目</button>
+      <button class="btn studio-submit" bindtap="newProject" wx:else disabled>仅管理员可立项</button>
+    </view>
+
+    <view class="card" wx:if="{{loading && !projects.length}}">
+      <view class="sk sk-line" style="width:42%"></view>
+      <view class="sk sk-line" style="width:92%"></view>
+      <view class="sk sk-line" style="width:30%;margin-bottom:0"></view>
+    </view>
+    <view class="empty" wx:elif="{{!projects.length}}">还没有项目——上面立第一个，或去「创作目标」带个方向过来</view>
+    <view class="card pj" wx:for="{{projects}}" wx:key="id" bindtap="goProject" data-id="{{item.id}}">
+      <view class="row-between">
+        <view class="row">
+          <text class="tag st-{{item.status}}">{{item.status === 'open' ? '进行中' : item.status === 'review' ? '等放行' : item.status === 'done' ? '已交付' : '已归档'}}</text>
+          <text class="pj-title ellp">{{item.title}}</text>
+        </view>
+        <text class="muted">{{item._time}}</text>
+      </view>
+      <view class="muted pj-meta">素材 {{item.asset_count}} · 步骤 {{item.step_count}} · 最近：{{item._last}}</view>
+      <view class="muted ellp2" wx:if="{{item.brief}}">{{item.brief}}</view>
+    </view>
+  </block>
+
+  <!-- ================= 待放行（成片/文案稿审核） ================= -->
+  <block wx:elif="{{tab === 'review'}}">
+    <view class="card">
+      <view class="row-between">
+        <view class="sec-title">待放行</view>
+        <view class="muted">待审 {{rSum.pending || 0}} · 已放行 {{rSum.approved || 0}} · 已发布 {{rSum.published || 0}}</view>
+      </view>
+      <view class="muted flow-tip">机器只有提案权：这里点「放行」，worker 才会去自动发布。</view>
+      <view class="tabs ra-tabs">
+        <text class="tab {{rFilter === f.code ? 'on' : ''}}" wx:for="{{rFilters}}" wx:key="code" wx:for-item="f"
+              bindtap="switchRFilter" data-code="{{f.code}}">{{f.label}}</text>
+      </view>
+      <view class="ra-row">
+        <view class="ra-tool-mini {{vOnly ? 'on' : ''}}" bindtap="toggleVOnly">只看视频成片</view>
+      </view>
+    </view>
+
+    <block wx:if="{{loading}}">
+      <view class="card" wx:for="{{[1,2,3]}}" wx:key="*this">
+        <view class="sk sk-line" style="width:42%"></view>
+        <view class="sk sk-line" style="width:92%"></view>
+        <view class="sk sk-line" style="width:74%"></view>
+        <view class="sk sk-line" style="width:30%;margin-bottom:0"></view>
+      </view>
+    </block>
+    <view class="empty" wx:elif="{{!shownItems.length}}">
+      这里还空着——去「项目」跑一条成片，或用「产文案」给内容派稿，发布后 AI 也会自动产。
+    </view>
+    <block wx:else>
+      <view class="card item" wx:for="{{shownItems}}" wx:key="id">
+        <view class="row-between">
+          <view class="row">
+            <text class="tag pf-{{item.platform}}">{{item.platform_label}}</text>
+            <text class="tag st-{{item.status}}">{{item.status === 'pending' ? '待审' : item.status === 'approved' ? '已放行' : item.status === 'rejected' ? '已驳回' : item.status === 'published' ? '已发布' : '发布失败'}}</text>
+            <text class="tag mission" wx:if="{{!item.review_id}}">项目/工坊出品</text>
+          </view>
+          <text class="muted">{{item._time}}</text>
+        </view>
+        <!-- 视频成片：直接在卡片里预览，审的就是看到的 -->
+        <video wx:if="{{item._videoUrl}}" class="it-video" src="{{item._videoUrl}}" object-fit="contain" show-center-play-btn controls />
+        <view class="it-title" bindtap="toggleOpen" data-id="{{item.id}}">
+          {{item._open ? item.body : item._body_short}}
+        </view>
+        <view class="row it-tags" wx:if="{{item._open}}">
+          <text class="tag" wx:for="{{item._tags}}" wx:key="*this" wx:for-item="tg">#{{tg}}</text>
+        </view>
+        <view class="it-media" wx:if="{{item._open && item._images.length}}">
+          <image wx:for="{{item._images}}" wx:key="*this" wx:for-item="im" class="it-img" src="{{im}}" mode="aspectFill" />
+        </view>
+        <view class="muted it-meta">
+          <text wx:if="{{item.review_id}}">内容 #{{item.review_id}} {{item.review_dish}} · </text>稿 #{{item.id}}{{item.note ? ' · ' + item.note : ''}}
+        </view>
+        <!-- 低频操作：幽灵胶囊，弱层级 -->
+        <view class="it-chips">
+          <text class="chip" bindtap="toggleOpen" data-id="{{item.id}}">{{item._open ? '收起' : '展开'}}</text>
+          <text class="chip" bindtap="copyText" data-text="{{item._copy}}">复制</text>
+          <text class="chip" wx:if="{{item._videoUrl}}" bindtap="saveVideo" data-url="{{item._videoUrl}}">存相册</text>
+          <text class="chip" wx:if="{{item._videoUrl}}" bindtap="copyVideoUrl" data-url="{{item._videoUrl}}">复制链接</text>
+          <text class="chip" wx:if="{{canWrite && (item.status === 'pending' || item.status === 'approved')}}"
+                bindtap="openEdit" data-id="{{item.id}}">改稿</text>
+        </view>
+        <!-- 关键动作：单独一行，靠右实心 -->
+        <view class="row it-ops" wx:if="{{canWrite && (item.status === 'pending' || item.status === 'approved' || item.status === 'rejected' || item.status === 'failed')}}">
+          <button class="btn-sm btn-danger" wx:if="{{item.status === 'pending' || item.status === 'approved' || item.status === 'failed'}}"
+                  bindtap="reject" data-id="{{item.id}}" data-dish="{{item.review_dish || item.title}}">驳回</button>
+          <view class="grow"></view>
+          <button class="btn-sm approve" wx:if="{{item.status === 'pending' || item.status === 'rejected' || item.status === 'failed'}}"
+                  bindtap="approve" data-id="{{item.id}}" data-platform="{{item.platform_label}}" data-dish="{{item.review_dish || item.title}}">
+            {{item.status === 'pending' ? '审核通过·发布' : '重新放行'}}
+          </button>
+        </view>
+      </view>
+    </block>
+  </block>
+
+  <!-- ================= 素材库（图片上传与管理：先存图，做片时引用） ================= -->
+  <block wx:elif="{{tab === 'lib'}}">
+    <view class="card">
+      <view class="sec-head">
+        <view class="sec-title">传图进库</view>
+        <view class="sec-cap">{{libSum || '图库还没东西'}}</view>
+      </view>
+      <view class="mat-row">
+        <view class="mat-cell" wx:for="{{libStaging}}" wx:key="key">
+          <image class="mat-thumb" src="{{item._preview}}" mode="aspectFill" />
+          <view class="mat-spin" wx:if="{{item.uploading}}">上传中</view>
+        </view>
+        <view class="mat-cell" wx:if="{{libStaging.length < 9}}">
+          <view class="mat-add" bindtap="libPick">＋<text class="mat-add-t">图</text></view>
+        </view>
+      </view>
+      <view class="field-help">相册/拍照都能传；传好的图存在服务端，做项目时点一下就能挂进去，不用翻手机相册。</view>
+    </view>
+
+    <view class="card">
+      <view class="sec-head">
+        <view class="sec-title">库里现有</view>
+        <view class="sec-cap" bindtap="loadLib">刷新</view>
+      </view>
+      <view class="empty" wx:if="{{libLoading && !libImages.length}}">加载中…</view>
+      <view class="empty" wx:elif="{{!libImages.length}}">还没传过图，上面加号传第一张</view>
+      <view class="lib-grid" wx:else>
+        <view class="lib-cell" wx:for="{{libImages}}" wx:key="id" bindtap="libUse" data-i="{{index}}">
+          <image class="lib-img" src="{{item._url}}" mode="aspectFill" lazy-load />
+          <view class="lib-tag" wx:if="{{item.used_by}}">在用</view>
+          <view class="lib-cap">{{item._date}}</view>
+        </view>
+      </view>
+      <view class="field-help" wx:if="{{libImages.length}}">点图可选：挂到项目 / 复制路径 / 删除（被内容引用的图删不掉）。</view>
+    </view>
+  </block>
+
+  <!-- ================= 产文案（给内容派平台稿任务） ================= -->
+  <block wx:elif="{{tab === 'mission'}}">
+    <view class="card">
+      <view class="sec-head">
+        <view class="sec-title">产文案</view>
+        <view class="sec-cap">给已发布内容产平台稿</view>
+      </view>
+
+      <view class="field">
+        <view class="field-label">选内容（已发布，最新在前）</view>
+        <picker range="{{reviewNames}}" value="{{reviewIdx}}" bindchange="onPickReview">
+          <view class="picker-like">{{reviewIdx >= 0 ? reviewNames[reviewIdx] : '点我选择内容'}}</view>
+        </picker>
+      </view>
+
+      <view class="field">
+        <view class="field-label">发哪些平台</view>
+        <view class="pf-grid">
+          <view class="pf {{p.on ? 'on' : ''}}" wx:for="{{platforms}}" wx:key="code" wx:for-item="p"
+                bindtap="togglePlatform" data-i="{{index}}">
+            <view class="pf-check" wx:if="{{p.on}}">✓</view>
+            <view class="pf-name">{{p.label}}</view>
+            <view class="pf-tip">{{p.tip}}</view>
+          </view>
+        </view>
+      </view>
+
+      <view class="field">
+        <view class="field-label">特别要求（选填，AI 会照办）</view>
+        <textarea class="textarea small" placeholder="例：这次突出性价比，标题带上店名，多给小红书产稿"
+                  placeholder-class="ph" value="{{missionNote}}" bindinput="onMissionNote" />
+      </view>
+
+      <button class="btn" bindtap="submitMission">下达任务（AI 产稿进待审）</button>
+      <view class="muted flow-tip center">发布权在你手里：产完的文案不点放行，永远发不出去。</view>
+    </view>
+
+    <view class="card" bindtap="switchTab" data-code="review">
+      <view class="sec-head">
+        <view class="sec-title">产完的稿子去哪了</view>
+        <view class="sec-cap">去待放行 ›</view>
+      </view>
+      <view class="muted flow-tip" style="margin-top:0">AI 产稿全部落在「待放行」：改稿、驳回、放行都在那里做。没放行的稿子，worker 碰不到发布接口。</view>
+    </view>
+  </block>
+
+  <!-- ================= 创作目标（原选题指令：告诉 AI 最近做什么题、怎么写） ================= -->
+  <block wx:elif="{{tab === 'cmds'}}">
+    <view class="card">
+      <view class="row-between">
+        <view class="sec-title">创作目标</view>
+        <button class="btn-sm btn" bindtap="showDirectiveForm" wx:if="{{canWrite}}">下一条目标</button>
+      </view>
+      <view class="muted flow-tip">AI 草稿队列按目标选题；立项时也能带一条目标当方向。这里说的是"最近做什么题、怎么写、什么不能碰"。</view>
+    </view>
+
+    <view class="card" wx:if="{{dVisible}}">
+      <view class="field">
+        <view class="field-label">目标标题</view>
+        <input class="input" placeholder="例：这周做杭州面馆专题" placeholder-class="ph" value="{{dTitle}}" bindinput="onDTitle" />
+      </view>
+      <view class="field">
+        <view class="field-label">要求（选填）</view>
+        <textarea class="textarea small" placeholder="给 AI 的具体口径、素材方向" placeholder-class="ph"
+                  value="{{dBrief}}" bindinput="onDBrief" />
+      </view>
+      <view class="field">
+        <view class="field-label">类型</view>
+        <picker range="{{dKinds}}" range-key="label" value="{{dKindIdx}}" bindchange="onDKind">
+          <view class="picker-like">{{dKinds[dKindIdx].label}}</view>
+        </picker>
+      </view>
+      <view class="row">
+        <button class="btn grow gap" bindtap="addDirective">下达目标</button>
+        <button class="btn-plain grow" bindtap="hideDirectiveForm">收起</button>
+      </view>
+    </view>
+
+    <view class="card" wx:if="{{loading}}">
+      <view class="sk sk-line" style="width:36%"></view>
+      <view class="sk sk-line" style="width:88%"></view>
+      <view class="sk sk-line" style="width:60%;margin-bottom:0"></view>
+    </view>
+    <view class="empty" wx:elif="{{!directives.length}}">还没有目标——定一条「这周做什么题」，AI 产稿就有方向了</view>
+    <block wx:else>
+      <view class="card ditem" wx:for="{{directives}}" wx:key="id">
+        <view class="row-between">
+          <view class="row">
+            <text class="tag">{{item.kind_text}}</text>
+            <text class="tag ds-{{item.status}}">{{item.status === 'open' ? '进行中' : item.status === 'done' ? '已完成' : '已取消'}}</text>
+          </view>
+          <text class="muted">{{item.date || '长期'}} · {{item._time}}</text>
+        </view>
+        <view class="d-title">{{item.title}}</view>
+        <view class="muted" wx:if="{{item.brief}}">{{item.brief}}</view>
+        <view class="muted" wx:if="{{item.result_note}}">执行：{{item.result_note}}</view>
+        <view class="w-ops" wx:if="{{canWrite && item.status === 'open'}}">
+          <button class="btn-sm btn-plain" bindtap="useGoalInStudio" data-id="{{item.id}}">带去立项</button>
+          <button class="btn-sm btn-plain" bindtap="doneDirective" data-id="{{item.id}}" data-to="done">标记完成</button>
+          <button class="btn-sm btn-danger" bindtap="doneDirective" data-id="{{item.id}}" data-to="cancelled">取消</button>
+        </view>
+      </view>
+    </block>
+  </block>
+
+  <!-- 改稿弹层 -->
+  <view class="mask" wx:if="{{editVisible}}" bindtap="closeEdit">
+    <view class="sheet" catchtap="noop">
+      <view class="row-between sheet-head">
+        <view class="title">改稿 · {{editPlatform}}</view>
+        <view class="muted" bindtap="closeEdit">完成</view>
+      </view>
+      <scroll-view scroll-y class="sheet-body">
+        <view class="field">
+          <view class="field-label">标题</view>
+          <input class="input" placeholder="可留空（部分平台无标题）" placeholder-class="ph" value="{{editTitle}}" bindinput="onEditTitle" />
+        </view>
+        <view class="field">
+          <view class="field-label">正文</view>
+          <textarea class="textarea" value="{{editBody}}" bindinput="onEditBody" auto-height maxlength="-1" />
+        </view>
+        <view class="field">
+          <view class="field-label">话题词（空格分隔，不带#）</view>
+          <input class="input" placeholder="杭州美食 探店 锅气" placeholder-class="ph" value="{{editTags}}" bindinput="onEditTags" />
+        </view>
+      </scroll-view>
+      <view class="row sheet-foot">
+        <button class="btn-plain grow gap" bindtap="closeEdit">取消</button>
+        <button class="btn grow" bindtap="saveEdit">保存改稿</button>
+      </view>
+    </view>
+  </view>
+</view>

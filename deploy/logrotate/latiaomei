@@ -1,0 +1,14 @@
+# 辣条妹服务日志：每天切一次，留 14 天，压缩存档。
+# 服务以 append 方式写同一个文件，所以用 copytruncate 而不是发信号重开，
+# 这样不会因为轮转把正在写的行截断。
+/var/log/latiaomei/*.log {
+    daily
+    rotate 14
+    compress
+    delaycompress
+    missingok
+    notifempty
+    copytruncate
+    create 0640 root root
+    su root root
+}

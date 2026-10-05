@@ -1,0 +1,9 @@
+.desc { line-height: 1.7; margin-top: 10rpx; }
+.filters { gap: 14rpx; margin-bottom: 8rpx; }
+.f { font-size: 24rpx; padding: 8rpx 26rpx; border-radius: 24rpx; background: #f5f1e8; color: var(--ink-soft); }
+.f.on { background: var(--ink); color: #fff; }
+.log { padding: 18rpx 0; border-top: 1rpx solid var(--line); }
+.l-main { display: flex; align-items: center; justify-content: space-between; }
+.l-act { font-size: 28rpx; }
+.l-target { font-size: 22rpx; color: var(--ink-soft); background: #f5f1e8; padding: 2rpx 14rpx; border-radius: 6rpx; max-width: 320rpx; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.l-sub { font-size: 22rpx; margin-top: 6rpx; }

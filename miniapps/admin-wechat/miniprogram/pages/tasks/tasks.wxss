@@ -1,0 +1,19 @@
+/* 任务队列页：只盯机器不生产。样式复用全局卡片/标签，这里只补队列特有部分。 */
+
+.worker-off { display: block; background: #f6e3c8; color: #7a5a17; border-radius: var(--radius-ctl); padding: 16rpx 20rpx; line-height: 1.6; }
+
+.quick { flex-wrap: wrap; align-items: center; gap: 8rpx; margin-top: 12rpx; }
+.qbtn { margin: 0; border: 1rpx dashed var(--gold); background: #fff; color: var(--gold); }
+
+.titem .t-brief { font-size: 24rpx; color: var(--ink-soft); margin-top: 8rpx; word-break: break-all; }
+.t-video { width: 100%; height: 400rpx; border-radius: var(--radius-ctl); margin-top: 14rpx; background: #000; }
+.w-ops { display: flex; flex-wrap: wrap; align-items: center; gap: 12rpx; margin-top: 16rpx; }
+.w-ops button { margin: 0; }
+
+.ts-pending { background: #f8efcf; color: #8a6b1d; }
+.ts-running { background: #dbe6f0; color: #2f4d68; }
+.ts-done { background: #dde8d0; color: #3f5a2a; }
+.ts-failed { background: #ecd6d0; color: #7a3a2a; }
+.ts-skipped { background: #eceae4; color: var(--ink-soft); }
+
+.foot { text-align: center; padding: 24rpx 0 40rpx; }

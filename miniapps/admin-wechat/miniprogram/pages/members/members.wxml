@@ -1,0 +1,49 @@
+<view class="wrap">
+  <ro-banner></ro-banner>
+
+  <view class="card intro">
+    <view class="title">成员名单</view>
+    <view class="muted intro-txt">
+      微信身份就是登录凭证，没有账号密码。第一位进入的人自动成为「主人」，
+      之后的人默认只能看，需要你在这里点「放行」才能改内容。
+    </view>
+    <view class="mode" wx:if="{{openMode}}">
+      <text class="mode-on">放开模式</text>
+      <text class="muted">当前任何人登录即可写（服务端 WX_OPEN_ADMINS=1）</text>
+    </view>
+  </view>
+
+  <view class="card" wx:for="{{items}}" wx:key="openid">
+    <view class="row">
+      <image wx:if="{{item.avatar}}" class="ava" src="{{item.avatar}}" mode="aspectFill" />
+      <view wx:else class="ava ph">{{item._initial}}</view>
+      <view class="grow">
+        <view class="m-name">
+          {{item.nickname || '未命名微信'}}
+          <text class="role r-{{item.role}}">{{item._roleText}}</text>
+        </view>
+        <view class="muted oid">openid {{item.openid}}</view>
+        <view class="muted">
+          登录 {{item.login_count}} 次 · 最近 {{item._last}}
+          <text wx:if="{{item._first !== item._last}}"> · 首次 {{item._first}}</text>
+        </view>
+        <view class="muted note" wx:if="{{item.note}}">备注：{{item.note}}</view>
+      </view>
+    </view>
+
+    <view class="acts" wx:if="{{isOwner && item.role !== 'owner'}}">
+      <view class="a a-ok" wx:if="{{item.role === 'pending'}}" bindtap="act" data-o="{{item.openid}}" data-a="approve">放行</view>
+      <view class="a" wx:if="{{item.role === 'admin'}}" bindtap="act" data-o="{{item.openid}}" data-a="demote">降为只读</view>
+      <view class="a" bindtap="setNote" data-o="{{item.openid}}" data-n="{{item.note}}">备注</view>
+      <view class="a a-bad" wx:if="{{item.role !== 'banned'}}" bindtap="act" data-o="{{item.openid}}" data-a="ban">拉黑</view>
+      <view class="a" wx:if="{{item.role === 'banned'}}" bindtap="act" data-o="{{item.openid}}" data-a="unban">解除拉黑</view>
+      <view class="a a-bad" bindtap="act" data-o="{{item.openid}}" data-a="remove">移除</view>
+    </view>
+    <view class="acts hint" wx:elif="{{item.role === 'pending'}}">
+      <text class="muted">等待主人在上面点「放行」</text>
+    </view>
+  </view>
+
+  <view class="empty" wx:if="{{!loading && !items.length}}">名单是空的</view>
+  <view class="muted foot" wx:if="{{isOwner}}">提示：陌生微信刚进来时不会出现在这里，他必须先在小程序里登录一次。</view>
+</view>

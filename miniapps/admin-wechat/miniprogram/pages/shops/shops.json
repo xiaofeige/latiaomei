@@ -1,0 +1,6 @@
+{
+  "navigationBarTitleText": "探店榜",
+  "usingComponents": {
+    "rank-admin": "/components/rank-admin/index"
+  }
+}

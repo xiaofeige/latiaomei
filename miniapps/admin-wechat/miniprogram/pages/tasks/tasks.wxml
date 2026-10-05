@@ -1,0 +1,58 @@
+<view class="wrap">
+  <view class="card">
+    <view class="row-between">
+      <view class="sec-title">worker 队列</view>
+      <view class="muted">排队 {{tSum.pending || 0}} · 执行 {{tSum.running || 0}} · 失败 {{tSum.failed || 0}}</view>
+    </view>
+    <view class="tabs" style="margin-top:16rpx">
+      <text class="tab {{tFilter === f.code ? 'on' : ''}}" wx:for="{{tFilters}}" wx:key="code" wx:for-item="f"
+            bindtap="switchTFilter" data-code="{{f.code}}">{{f.label}}</text>
+    </view>
+  </view>
+
+  <view class="card" wx:if="{{!workerOn}}">
+    <view class="muted worker-off">worker 通道未开启：服务端未配置 LATIAOMEI_PIPELINE_TOKEN，任务只会排队不会被执行。</view>
+  </view>
+
+  <!-- 补发：挑一条内容，手动把某类任务拨回队列 -->
+  <view class="card" wx:if="{{canWrite}}">
+    <view class="sec-head">
+      <view class="sec-title">补发任务</view>
+      <view class="sec-cap">漏跑、失败不想重试时用</view>
+    </view>
+    <view class="field">
+      <view class="field-label">选内容（已发布，最新在前；留空 = 不带内容）</view>
+      <picker range="{{reviewNames}}" value="{{reviewIdx}}" bindchange="onPickReview">
+        <view class="picker-like">{{reviewIdx >= 0 ? reviewNames[reviewIdx] : '点我选择内容'}}</view>
+      </picker>
+    </view>
+    <view class="row quick">
+      <text class="tag qbtn" wx:for="{{enqTypes}}" wx:key="code" wx:for-item="ty"
+            bindtap="quickEnqueue" data-code="{{ty.code}}">{{ty.label}}</text>
+    </view>
+  </view>
+
+  <view class="empty" wx:if="{{loading}}">加载中…</view>
+  <view class="empty" wx:elif="{{!tasks.length}}">队列干净得很</view>
+  <block wx:else>
+    <view class="card titem" wx:for="{{tasks}}" wx:key="id">
+      <view class="row-between">
+        <view class="row">
+          <text class="tag">{{item.type_label}}</text>
+          <text class="tag ts-{{item.status}}">{{item._status_label}}</text>
+        </view>
+        <text class="muted">{{item._time}} · 第{{item.attempts}}次</text>
+      </view>
+      <view class="muted" wx:if="{{item.review_id}}">内容 #{{item.review_id}} {{item.review_dish}}</view>
+      <view class="t-brief" wx:if="{{item._result}}">{{item._result}}</view>
+      <video wx:if="{{item._video}}" class="t-video" src="{{item._video}}" object-fit="contain" show-center-play-btn controls />
+      <view class="w-ops" wx:if="{{canWrite && (item.status === 'failed' || item.status === 'pending')}}">
+        <button class="btn-sm btn-plain" wx:if="{{item.status === 'failed'}}"
+                bindtap="actTask" data-id="{{item.id}}" data-a="retry">重试</button>
+        <button class="btn-sm btn-danger" bindtap="actTask" data-id="{{item.id}}" data-a="skip">放弃</button>
+      </view>
+    </view>
+  </block>
+
+  <view class="foot muted" bindtap="reload">点此刷新 · 生产请去「工作台」Tab</view>
+</view>

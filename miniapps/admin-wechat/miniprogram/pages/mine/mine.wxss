@@ -1,0 +1,38 @@
+.idcard { display: flex; align-items: center; }
+.ava { width: 108rpx; height: 108rpx; border-radius: 50%; margin-right: 24rpx; flex-shrink: 0; background: #f0ebe0; }
+.ava.ph { text-align: center; line-height: 108rpx; background: var(--gold); color: #fff; font-size: 44rpx; }
+.id-name { font-size: 34rpx; font-weight: 600; }
+.role { font-size: 20rpx; padding: 3rpx 14rpx; border-radius: 20rpx; margin-left: 12rpx; vertical-align: middle; }
+.r-owner { background: #b58f4a; color: #fff; }
+.r-admin { background: #e7f0e4; color: #4a7c59; }
+.r-pending { background: #f0ebe0; color: #8a8478; }
+.r-banned { background: #f7e3de; color: #a0503c; }
+
+.pending-t { font-size: 28rpx; font-weight: 600; color: #8a5a1a; }
+.pending-d { line-height: 1.7; margin-top: 8rpx; }
+
+.cell { display: flex; justify-content: space-between; align-items: center; padding: 26rpx 0; border-top: 1rpx solid var(--line); font-size: 28rpx; }
+.cell:first-of-type { border-top: none; }
+.arr { color: #c9c2b6; }
+
+.sec-title { font-size: 30rpx; margin-bottom: 10rpx; }
+.kv { display: flex; justify-content: space-between; font-size: 26rpx; padding: 12rpx 0; }
+.kv .k { color: var(--ink-soft); }
+.kv .ok { color: #4a7c59; }
+.kv .bad { color: #a0503c; }
+.ops { display: flex; flex-wrap: wrap; gap: 16rpx; margin-top: 20rpx; }
+.op { flex: 1 1 45%; font-size: 26rpx; }
+.export { margin-top: 20rpx; color: var(--gold); border-color: var(--gold); }
+
+.logout { margin-top: 30rpx; line-height: 2.8; border-radius: 12rpx; font-size: 30rpx; }
+.ver { text-align: center; padding: 16rpx 0 40rpx; font-size: 22rpx; line-height: 1.6; }
+
+.mask { position: fixed; top: 0; right: 0; bottom: 0; left: 0; background: rgba(0,0,0,0.45); z-index: 100; display: flex; align-items: flex-end; }
+.sheet { width: 100%; background: #fff; border-radius: 24rpx 24rpx 0 0; padding: 28rpx; max-height: 78vh; display: flex; flex-direction: column; }
+.sheet-head { margin-bottom: 16rpx; }
+.sheet-body { flex: 1; min-height: 300rpx; }
+.up { display: flex; align-items: center; padding: 16rpx 0; border-top: 1rpx solid var(--line); }
+.up-img { width: 110rpx; height: 110rpx; border-radius: 10rpx; margin-right: 20rpx; background: #f0ebe0; flex-shrink: 0; }
+.up-info { flex: 1; min-width: 0; }
+.up-path { font-size: 24rpx; word-break: break-all; }
+.sheet-tip { margin-top: 16rpx; font-size: 22rpx; text-align: center; }

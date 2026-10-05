@@ -1,0 +1,73 @@
+<view class="wrap">
+  <view class="card">
+    <view class="field">
+      <view class="field-label">店名 <text class="req">*</text></view>
+      <input class="input" placeholder="店铺全名" placeholder-class="ph" value="{{form.name}}" data-k="name" bindinput="onInput" />
+    </view>
+    <view class="field row">
+      <view class="field-label grow">城市</view>
+      <input class="input num" placeholder="成都" placeholder-class="ph" value="{{form.city}}" data-k="city" bindinput="onInput" />
+    </view>
+    <view class="field row">
+      <view class="field-label grow">区县</view>
+      <input class="input num" placeholder="武侯区" placeholder-class="ph" value="{{form.district}}" data-k="district" bindinput="onInput" />
+    </view>
+    <view class="field">
+      <view class="field-label">地址</view>
+      <input class="input" placeholder="详细门牌" placeholder-class="ph" value="{{form.address}}" data-k="address" bindinput="onInput" />
+    </view>
+    <view class="field">
+      <view class="field-label">位置坐标</view>
+      <view class="row">
+        <view class="btn-plain mini" wx:if="{{form.lat}}" bindtap="clearPoint">已标 · 清除</view>
+        <view class="btn mini" style="margin-left:12rpx" bindtap="pickPoint">地图选点</view>
+      </view>
+      <view class="field-help">标了才能进对客转盘的「附近」盘</view>
+    </view>
+    <view class="field row">
+      <view class="field-label grow">菜系</view>
+      <input class="input num" placeholder="火锅 / 小吃…" placeholder-class="ph" value="{{form.cuisine}}" data-k="cuisine" bindinput="onInput" />
+    </view>
+    <view class="field row">
+      <view class="field-label grow">人均（元）</view>
+      <input class="input num" type="number" placeholder="0" placeholder-class="ph" value="{{form.avg_price}}" data-k="avg_price" bindinput="onInput" />
+    </view>
+    <view class="field">
+      <view class="field-label">营业时间</view>
+      <input class="input" placeholder="如 11:00-14:00 17:00-22:00" placeholder-class="ph" value="{{form.hours}}" data-k="hours" bindinput="onInput" />
+    </view>
+  </view>
+
+  <view class="card">
+    <view class="field-label">门店图</view>
+    <view class="img-cell">
+      <image wx:if="{{coverUrl}}" class="big-thumb" src="{{coverUrl}}" mode="aspectFill" bindtap="pickCover" />
+      <view wx:else class="big-thumb add" bindtap="pickCover">＋ 上传门店图</view>
+      <view wx:if="{{form.cover}}" class="img-del" catchtap="delCover">✕</view>
+    </view>
+    <view class="field" style="margin-top:24rpx">
+      <view class="field-label">备注 / 招牌</view>
+      <textarea class="textarea small" placeholder="必点、避雷点、停车提示…" placeholder-class="ph" value="{{form.note}}" data-k="note" bindinput="onInput" auto-height />
+    </view>
+  </view>
+
+  <view class="card">
+    <view class="field">
+      <view class="field-label">抖音链接</view>
+      <input class="input" placeholder="https://v.douyin.com/…" placeholder-class="ph" value="{{form.douyin_url}}" data-k="douyin_url" bindinput="onInput" />
+    </view>
+    <view class="field">
+      <view class="field-label">小红书链接</view>
+      <input class="input" placeholder="https://www.xiaohongshu.com/…" placeholder-class="ph" value="{{form.xhs_url}}" data-k="xhs_url" bindinput="onInput" />
+    </view>
+    <view class="field" wx:if="{{isEdit}}">
+      <view class="field-label">Slug<text class="muted">（改了会影响已有链接，慎用）</text></view>
+      <input class="input" value="{{form.slug}}" data-k="slug" bindinput="onInput" />
+    </view>
+  </view>
+
+  <view class="save-bar">
+    <button class="btn-plain grow gap" bindtap="cancel">取消</button>
+    <button class="btn grow" loading="{{saving}}" bindtap="save">{{isEdit ? '保存修改' : '创建店铺'}}</button>
+  </view>
+</view>

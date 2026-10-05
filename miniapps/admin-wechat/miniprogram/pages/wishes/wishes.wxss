@@ -1,0 +1,41 @@
+/* 许愿池：分析卡 + 状态页签 + 愿望流水 */
+.w-counts { display: flex; margin-top: 18rpx; }
+.wc { flex: 1; display: flex; flex-direction: column; align-items: center; }
+.wc .n { font-size: 44rpx; font-weight: 700; line-height: 1.2; }
+.wc .n.gold { color: var(--gold); }
+.wc .c { font-size: 22rpx; color: var(--ink-soft); margin-top: 4rpx; }
+
+.kw-title { margin-bottom: 12rpx; }
+.kw-wrap { display: flex; flex-wrap: wrap; }
+.kw {
+  font-size: 24rpx; background: #f0ebe0; color: var(--ink); border-radius: 999rpx;
+  padding: 6rpx 20rpx; margin: 0 12rpx 12rpx 0;
+}
+.kw.mid { background: #ecd9b0; font-weight: 600; }
+.kw.hot { background: var(--gold); color: #fff; font-weight: 700; }
+
+.tabs { display: flex; flex-wrap: wrap; margin-bottom: 20rpx; }
+.tab {
+  font-size: 24rpx; color: var(--ink-soft); background: #fff; border: 1rpx solid var(--line);
+  border-radius: 999rpx; padding: 8rpx 26rpx; margin: 0 12rpx 12rpx 0;
+}
+.tab.on { background: var(--ink); color: #f4e8d0; border-color: var(--ink); font-weight: 600; }
+
+.wish { padding-bottom: 12rpx; }
+.w-content { font-size: 28rpx; margin: 14rpx 0 8rpx; line-height: 1.6; }
+.w-note {
+  margin-top: 12rpx; font-size: 24rpx; color: var(--ink); background: #faf3e3;
+  border-left: 6rpx solid var(--gold); border-radius: 0 10rpx 10rpx 0; padding: 10rpx 16rpx;
+}
+.st-picked { background: #ecd9b0; color: #6b4e17; }
+.st-done { background: #dde8d0; color: #3f5a2a; }
+.st-rejected { background: #ecd6d0; color: #7a3a2a; }
+.st-new { background: #f8efcf; color: #8a6b1d; font-weight: 600; }
+
+.w-ops { display: flex; flex-wrap: wrap; align-items: center; gap: 12rpx; margin-top: 16rpx; }
+.w-ops .op { margin: 0; }
+.op-pick { background: var(--gold); margin-left: auto; }
+.del { margin: 0; line-height: 2.2; }
+
+/* v10 呼声：状态 + 🌶 票数并排 */
+.w-st { display: flex; align-items: center; gap: 12rpx; }

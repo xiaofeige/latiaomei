@@ -1,0 +1,6 @@
+{
+  "navigationBarTitleText": "辣条妹 · 概览",
+  "enablePullDownRefresh": true,
+  "backgroundTextStyle": "dark",
+  "usingComponents": { "ro-banner": "/components/ro-banner/index" }
+}

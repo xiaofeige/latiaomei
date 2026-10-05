@@ -1,0 +1,51 @@
+<view class="wrap">
+  <!-- 分析卡：一眼看清许愿池水位 -->
+  <view class="card">
+    <view class="row-between">
+      <view class="title">许愿池分析</view>
+      <view class="muted">近7天 +{{stats.new_7d || 0}}</view>
+    </view>
+    <view class="w-counts">
+      <view class="wc"><text class="n">{{stats.total || 0}}</text><text class="c">总愿望</text></view>
+      <view class="wc"><text class="n gold">{{stats.new || 0}}</text><text class="c">待处理</text></view>
+      <view class="wc"><text class="n">{{stats.picked || 0}}</text><text class="c">已翻牌</text></view>
+      <view class="wc"><text class="n">{{stats.done || 0}}</text><text class="c">已踩坑</text></view>
+    </view>
+    <view class="divider"></view>
+    <view class="muted kw-title">粉丝最近最想要（词频 ≥2）</view>
+    <view class="kw-wrap" wx:if="{{keywords.length}}">
+      <text class="kw {{k.hot}}" wx:for="{{keywords}}" wx:key="word" wx:for-item="k">{{k.word}} · {{k.count}}</text>
+    </view>
+    <view class="muted" wx:else>样本还不够，攒攒愿望再看出品风向</view>
+  </view>
+
+  <!-- 状态筛选 -->
+  <view class="tabs">
+    <text class="tab {{tab === t.code ? 'on' : ''}}" wx:for="{{tabs}}" wx:key="code" wx:for-item="t"
+          bindtap="switchTab" data-code="{{t.code}}">{{t.label}}</text>
+  </view>
+
+  <!-- 愿望流水 -->
+  <view class="empty" wx:if="{{loading}}">加载中…</view>
+  <view class="empty" wx:elif="{{!wishes.length}}">这个池子里还没有愿望</view>
+  <block wx:else>
+    <view class="card wish" wx:for="{{wishes}}" wx:key="id">
+    <view class="row-between">
+      <view class="w-st">
+        <text class="tag st-{{item.status}}">{{item.status_text}}</text>
+        <text class="tag" wx:if="{{item.likes > 0}}">🌶 {{item.likes}} 声</text>
+      </view>
+      <text class="muted">{{item.channel}} · {{item.timeTxt}}</text>
+    </view>
+    <view class="w-content">{{item.content}}</view>
+    <view class="muted" wx:if="{{item.contact}}">联系方式：{{item.contact}}</view>
+    <view class="w-note" wx:if="{{item.note}}">批复：{{item.note}}</view>
+    <view class="w-ops" wx:if="{{canWrite}}">
+      <button class="btn-sm btn-plain op" wx:for="{{actions}}" wx:key="to" wx:for-item="a"
+              bindtap="act" data-id="{{item.id}}" data-to="{{a.to}}">{{a.label}}</button>
+      <button class="btn-sm btn op-pick" bindtap="toDirective" data-id="{{item.id}}">翻牌转指令</button>
+      <button class="btn-sm btn-danger del" bindtap="del" data-id="{{item.id}}">删</button>
+    </view>
+    </view>
+  </block>
+</view>

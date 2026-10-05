@@ -1,0 +1,38 @@
+<view class="wrap">
+  <ro-banner wx:if="{{!canWrite}}" text="只读模式：可以看转盘池，不能上下盘。"></ro-banner>
+
+  <view class="card intro">
+    <view class="muted">对应网站首页的两个转盘：在盘的内容才会被转到；整盘全下盘时，前台自动退回「全部已发布」兜底，不会空转。</view>
+  </view>
+
+  <view class="tabs">
+    <view class="tab {{tab === index ? 'on' : ''}}" wx:for="{{panels}}" wx:key="kind"
+          bindtap="switchTab" data-i="{{index}}">{{item.name}}</view>
+  </view>
+
+  <view class="card" wx:if="{{panels.length}}">
+    <view class="row-between">
+      <view class="title sec-title">{{panels[tab].name}} · 「{{panels[tab].q}}」</view>
+      <view class="muted">在盘 {{panels[tab].on}} / {{panels[tab].items.length}}</view>
+    </view>
+    <view class="muted sub">已发布共 {{panels[tab].total}} 条{{panels[tab].total > 100 ? '（仅显示前 100 条，更多请到对应榜单 Tab）' : ''}}</view>
+
+    <view class="w-row" wx:for="{{panels[tab].items}}" wx:key="id">
+      <view class="w-left" bindtap="edit" data-id="{{item.id}}">
+        <view class="w-name">
+          <text>{{item.dish}}</text>
+          <text class="w-off" wx:if="{{!item.wheel}}">未上盘</text>
+        </view>
+        <view class="muted ellipsis" wx:if="{{item.shop}}">{{item.shop}} · 浏览 {{item.view_count}}</view>
+        <view class="muted" wx:else>浏览 {{item.view_count}}</view>
+      </view>
+      <view class="w-act {{item.wheel ? 'off' : 'on'}}" wx:if="{{canWrite}}"
+            bindtap="toggle" data-id="{{item.id}}" data-on="{{item.wheel}}">{{item.wheel ? '下盘' : '上盘'}}</view>
+    </view>
+    <view class="empty small" wx:if="{{!loading && !panels[tab].items.length}}">这个栏目还没有已发布的内容，写一条才能上转盘</view>
+  </view>
+
+  <view class="loadmore muted" wx:if="{{loading}}">加载中…</view>
+
+  <view class="fab" wx:if="{{canWrite && panels.length}}" bindtap="create" data-i="{{tab}}">＋</view>
+</view>

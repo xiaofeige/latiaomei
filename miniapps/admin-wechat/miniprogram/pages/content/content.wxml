@@ -1,0 +1,12 @@
+<view class="ct">
+  <!-- 两个榜用分段切换共用一个 Tab；选中态用整块反色表达，不加装饰点 -->
+  <view class="ct-seg">
+    <view class="ct-seg-i {{kind === 'yushanfang' ? 'on' : ''}}" bindtap="switchKind" data-k="yushanfang">私厨榜</view>
+    <view class="ct-seg-i {{kind === 'tandian' ? 'on' : ''}}" bindtap="switchKind" data-k="tandian">探店榜</view>
+  </view>
+  <!-- --ra-h 把分段条的高度让给榜单组件 -->
+  <view class="ct-body" style="--ra-h: calc(100vh - {{segH}}px)">
+    <rank-admin wx:if="{{kind === 'tandian'}}" kind="tandian"></rank-admin>
+    <rank-admin wx:else kind="yushanfang"></rank-admin>
+  </view>
+</view>

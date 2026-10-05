@@ -1,0 +1,31 @@
+/* 访问分析：图表样式与概览页同语言。 */
+.bars { display: flex; align-items: flex-end; height: 230rpx; margin-top: 8rpx; }
+.bar-col { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; }
+.b-top { display: flex; align-items: flex-end; gap: 3rpx; height: 190rpx; }
+.bar-pv, .bar-uv { width: 12rpx; border-radius: 4rpx 4rpx 0 0; }
+.bar-pv { background: var(--gold); }
+.bar-uv { background: var(--gold-soft); opacity: 0.55; }
+.bar-cap { font-size: 18rpx; color: var(--ink-faint); margin-top: 8rpx; }
+
+.legend { display: flex; align-items: center; gap: 8rpx; font-size: 22rpx; margin-top: 14rpx; }
+.lg { width: 14rpx; height: 14rpx; border-radius: 4rpx; display: inline-block; margin-left: 16rpx; }
+.lg-pv { background: var(--gold); }
+.lg-uv { background: var(--gold-soft); opacity: 0.6; margin-left: 24rpx; }
+.on-day { color: var(--gold); font-weight: 600; }
+
+.sec-title { font-size: 30rpx; margin-bottom: 16rpx; font-weight: 600; }
+.mini-grid { display: flex; margin: 10rpx 0 24rpx; }
+.mini { flex: 1; text-align: center; }
+.m-num { display: block; font-size: 38rpx; font-weight: 700; color: var(--ink); }
+.m-cap { display: block; font-size: 22rpx; color: var(--ink-soft); margin-top: 4rpx; }
+
+.hourly { display: flex; align-items: flex-end; height: 120rpx; border-bottom: 1rpx solid var(--line); }
+.h-col { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; position: relative; }
+.h-bar { width: 60%; background: #cbb894; border-radius: 3rpx 3rpx 0 0; min-height: 2rpx; }
+.h-cap { position: absolute; bottom: -34rpx; font-size: 18rpx; color: var(--ink-faint); }
+
+.rank { display: flex; justify-content: space-between; font-size: 26rpx; padding: 16rpx 0; border-top: 1rpx solid var(--line); }
+.r-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-right: 20rpx; }
+.r-val { color: var(--gold); font-weight: 600; }
+.empty.small { padding: 40rpx 0; text-align: center; color: var(--ink-soft); font-size: 24rpx; }
+.card .title { font-size: 32rpx; }

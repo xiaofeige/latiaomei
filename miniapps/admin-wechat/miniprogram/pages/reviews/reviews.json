@@ -1,0 +1,6 @@
+{
+  "navigationBarTitleText": "私厨榜",
+  "usingComponents": {
+    "rank-admin": "/components/rank-admin/index"
+  }
+}

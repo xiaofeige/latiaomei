@@ -1,0 +1,36 @@
+[Unit]
+Description=辣条妹的御膳房（latiaomei HTTP 服务）
+Documentation=https://latiaomei.infinityfly.xin
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/data/www/latiaomei
+ExecStart=/data/www/latiaomei/build/latiaomei serve
+EnvironmentFile=/data/www/latiaomei/deploy/latiaomei.env
+
+Restart=always
+RestartSec=3
+# 连续快速重启（比如配置写错）不要无限刷日志：1 分钟最多起 5 次
+StartLimitIntervalSec=60
+StartLimitBurst=5
+
+# 这台机器总共 1.6G 内存，还要跟别的站共用。给服务划 1G 上限，
+# 真泄漏了就让内核杀它并自动重启，别把整机拖垮。Go 侧 GOMEMLIMIT 见 env 文件。
+MemoryMax=1G
+MemoryHigh=768M
+CPUQuota=150%
+
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+ProtectHome=true
+ReadWritePaths=/data/www/latiaomei/data /var/log/latiaomei
+LimitNOFILE=4096
+
+StandardOutput=append:/var/log/latiaomei/latiaomei.log
+StandardError=append:/var/log/latiaomei/latiaomei.log
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,18 @@
+{
+  "name": "latiaomei-admin-wechat-ci",
+  "version": "1.0.0",
+  "private": true,
+  "description": "辣条妹管理后台小程序的构建/预览/上传工具链（miniprogram-ci）",
+  "scripts": {
+    "check": "node check.js",
+    "compile": "node compile-check.js",
+    "preview": "node index.js preview",
+    "upload": "node index.js upload"
+  },
+  "dependencies": {
+    "miniprogram-ci": "^2.1.31"
+  },
+  "devDependencies": {
+    "@babel/parser": "^7.21.4"
+  }
+}

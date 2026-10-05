@@ -1,0 +1,8 @@
+# 上传密钥 / 构建产物：绝不入库
+private.*.key
+qr-*.png
+node_modules/
+.miniprogram-ci/
+miniprogram-ci-*/
+
+# 注意：package-lock.json 要提交，锁住 miniprogram-ci 版本保证 CI 可复现。

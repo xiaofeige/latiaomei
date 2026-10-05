@@ -1,0 +1,31 @@
+<view class="bar">
+  <!-- 黑底板从 60rpx 起；顶部纸色带由 .bar 底色铺平，C 位头像翘起处左右不漏背景 -->
+  <view class="bg"></view>
+
+  <view class="row">
+    <view class="grp">
+      <view class="tab {{active === item.k ? 'on' : ''}}" wx:for="{{tabs}}" wx:key="k" wx:if="{{item.side === 'l'}}"
+        hover-class="press" data-k="{{item.k}}" data-p="{{item.path}}" bindtap="go">
+        <text class="ic">{{item.ic}}</text>
+        <text class="tt">{{item.t}}</text>
+      </view>
+    </view>
+
+    <!-- C 位：辣条妹 AI 头像（霓虹环 + 呼吸绿点） -->
+    <view class="hero" hover-class="press" bindtap="goAi">
+      <view class="ring {{active === 'ai' ? 'lit' : ''}}">
+        <image class="face" src="/images/latiaomei-hero.svg" mode="aspectFit" />
+        <view class="dot"></view>
+      </view>
+      <text class="hero-tt {{active === 'ai' ? 'on' : ''}}">辣条妹</text>
+    </view>
+
+    <view class="grp">
+      <view class="tab {{active === item.k ? 'on' : ''}}" wx:for="{{tabs}}" wx:key="k" wx:if="{{item.side === 'r'}}"
+        hover-class="press" data-k="{{item.k}}" data-p="{{item.path}}" bindtap="go">
+        <text class="ic">{{item.ic}}</text>
+        <text class="tt">{{item.t}}</text>
+      </view>
+    </view>
+  </view>
+</view>

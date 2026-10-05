@@ -1,0 +1,92 @@
+<view class="wrap">
+  <view class="card idcard">
+    <image wx:if="{{avatar}}" class="ava" src="{{avatar}}" mode="aspectFill" />
+    <view wx:else class="ava ph">{{initial}}</view>
+    <view class="grow">
+      <view class="id-name">
+        {{nickname || '微信用户'}}
+        <text class="role r-{{role}}">{{roleText}}</text>
+      </view>
+      <view class="muted">{{idSub}}</view>
+      <view class="muted" wx:if="{{loginCount}}">已登录 {{loginCount}} 次 · 首次 {{firstSeen}}</view>
+    </view>
+  </view>
+
+  <view class="card" wx:if="{{!canWrite}}">
+    <view class="pending-t">你目前是只读身份</view>
+    <view class="muted pending-d">
+      可以查看全部内容与数据，但不能新增或修改。
+      需要权限的话，请让主人在「成员管理」里点「放行」。
+    </view>
+  </view>
+
+  <view class="card">
+    <view class="cell" bindtap="nav" data-url="/pages/tastes/tastes"><text>口味 / 场景标签</text><text class="arr">›</text></view>
+    <view class="cell" bindtap="nav" data-url="/pages/shop-archive/shop-archive"><text>店铺档案（探店里的店）</text><text class="arr">›</text></view>
+    <view class="cell" bindtap="nav" data-url="/pages/wheel/wheel"><text>转盘管理（首页双转盘）</text><text class="arr">›</text></view>
+    <view class="cell" bindtap="nav" data-url="/pages/wishes/wishes"><text>许愿池（粉丝愿望与分析）</text><text class="arr">›</text></view>
+    <view class="cell" bindtap="nav" data-url="/pages/pipeline/pipeline"><text>创作工作台（做视频·产文案·素材库）</text><text class="arr">›</text></view>
+    <view class="cell" bindtap="nav" data-url="/pages/tasks/tasks"><text>任务队列（worker 监控与补发）</text><text class="arr">›</text></view>
+    <view class="cell" bindtap="nav" data-url="/pages/settings/settings"><text>站点设置</text><text class="arr">›</text></view>
+    <view class="cell" bindtap="nav" data-url="/pages/analytics/analytics"><text>访问分析</text><text class="arr">›</text></view>
+    <view class="cell" bindtap="showUploads"><text>图片库</text><text class="arr">›</text></view>
+  </view>
+
+  <view class="card" wx:if="{{canWrite}}">
+    <view class="title sec-title">邀请其他管理员</view>
+    <view class="muted pending-d">
+      管理员不止一个人：把小程序转发给同事，对方用微信身份打开就能看数据（默认只读）。
+      第一位打开的人自动成为主人；之后的人在「成员管理」里点「放行」即可拿到写权限。
+    </view>
+    <button class="btn-plain" open-type="share">转发后台给同事</button>
+  </view>
+
+  <view class="card">
+    <view class="title sec-title">权限与审计</view>
+    <view class="cell" bindtap="nav" data-url="/pages/members/members"><text>成员管理<text class="muted" wx:if="{{!isOwner}}">（仅主人可操作）</text></text><text class="arr">›</text></view>
+    <view class="cell" bindtap="nav" data-url="/pages/audit/audit"><text>操作记录</text><text class="arr">›</text></view>
+    <view class="cell" bindtap="refreshProfile"><text>更新昵称头像</text><text class="arr">›</text></view>
+  </view>
+
+  <view class="card">
+    <view class="title sec-title">运维</view>
+    <view class="kv" bindtap="copyVer"><text class="k">小程序版本</text><text class="v">{{verText}}</text></view>
+    <view class="kv"><text class="k">基础库</text><text class="v">{{sdkText}}</text></view>
+    <view class="kv"><text class="k">服务状态</text><text class="v {{healthOk ? 'ok' : 'bad'}}">{{healthText}}</text></view>
+    <view class="kv"><text class="k">数据库体积</text><text class="v">{{dbText}}</text></view>
+    <view class="kv"><text class="k">图片库</text><text class="v">{{uploadText}}</text></view>
+    <view class="kv"><text class="k">上次清理</text><text class="v">{{lastPrune}}</text></view>
+
+    <view class="ops" wx:if="{{canWrite}}">
+      <button class="btn-plain op" bindtap="maint" data-a="flush">落盘增量</button>
+      <button class="btn-plain op" bindtap="maint" data-a="prune">清理过期统计</button>
+      <button class="btn-plain op" bindtap="maint" data-a="purge">清孤儿图片</button>
+      <button class="btn-plain op" bindtap="maint" data-a="vacuum">压缩数据库</button>
+    </view>
+    <button class="btn-plain export" bindtap="exportData">导出内容 JSON</button>
+  </view>
+
+  <button class="btn-danger logout" bindtap="clearLocal">清除本机登录态</button>
+  <view class="muted ver">微信身份即凭证 · 下次打开会自动重新登录</view>
+</view>
+
+<view class="mask" wx:if="{{uploadVisible}}" bindtap="hideUploads">
+  <view class="sheet" catchtap="noop">
+    <view class="row-between sheet-head">
+      <view class="title">图片库</view>
+      <view class="muted">{{uploadCount}} 张</view>
+    </view>
+    <scroll-view scroll-y class="sheet-body">
+      <view class="up" wx:for="{{uploads}}" wx:key="id" bindtap="useUpload" bindlongpress="delUpload"
+            data-id="{{item.id}}" data-path="{{item.path}}" data-used="{{item.used_by}}">
+        <image class="up-img" src="{{item._url}}" mode="aspectFill" />
+        <view class="up-info">
+          <view class="up-path">{{item.path}}</view>
+          <view class="muted">{{item._size}} · {{item._date}}</view>
+        </view>
+      </view>
+      <view class="empty" wx:if="{{!uploads.length}}">还没有上传过图片</view>
+    </scroll-view>
+    <view class="muted sheet-tip">点图片复制路径；长按删除（仍被引用的图后端会拒绝删）</view>
+  </view>
+</view>

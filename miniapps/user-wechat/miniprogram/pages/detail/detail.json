@@ -1,0 +1,6 @@
+{
+  "navigationBarTitleText": "点评详情",
+  "usingComponents": {
+    "review-card": "/components/review-card/index"
+  }
+}

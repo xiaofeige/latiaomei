@@ -1,0 +1,257 @@
+<view class="wrap">
+  <ro-banner></ro-banner>
+
+  <!-- 加载骨架：先占住版面再填数据 -->
+  <block wx:if="{{loading}}">
+    <view class="card"><view class="sk sk-line w40"></view><view class="sk sk-block"></view><view class="sk sk-line"></view><view class="sk sk-line w60"></view></view>
+    <view class="card"><view class="sk sk-line w40"></view><view class="sk sk-block"></view></view>
+    <view class="card"><view class="sk sk-line w60"></view><view class="sk sk-line"></view><view class="sk sk-line"></view></view>
+  </block>
+
+  <!-- 加载失败：说清原因，给重试按钮 -->
+  <view class="card err-card" wx:elif="{{loadError}}">
+    <view class="title">数据没拉到</view>
+    <view class="muted err-msg">{{loadError}}</view>
+    <button class="btn-plain" bindtap="reload">重新加载</button>
+  </view>
+
+  <block wx:else>
+    <!-- ① 今日战报：大数字 + 环比 + 24 小时节奏 -->
+    <view class="card hero">
+      <view class="row-between">
+        <view class="hero-date">
+          <view class="hero-day">{{todayLabel || '今日'}}</view>
+          <view class="hero-week">{{weekLabel}}</view>
+        </view>
+        <view class="chip {{deltaPv >= 0 ? 'chip-up' : 'chip-down'}}">
+          {{deltaPv >= 0 ? '▲' : '▼'}} {{deltaPvAbs}} · {{trendHint}}
+        </view>
+      </view>
+      <view class="hero-nums">
+        <view class="hero-main">
+          <view class="hero-n">{{todayPvN}}</view>
+          <view class="hero-cap">今日 PV</view>
+        </view>
+        <view class="hero-side">
+          <view class="hs-item"><text class="hs-n">{{todayUvN}}</text><text class="hs-cap">UV</text></view>
+          <view class="hs-item"><text class="hs-n">{{today.bot || 0}}</text><text class="hs-cap">爬虫</text></view>
+          <view class="hs-item"><text class="hs-n">{{today.api || 0}}</text><text class="hs-cap">API</text></view>
+        </view>
+      </view>
+      <view class="hourly" wx:if="{{hourlyBars.length}}">
+        <view class="h-col" wx:for="{{hourlyBars}}" wx:key="h">
+          <view class="h-bar {{item.now ? 'now' : ''}}" style="height:{{item.h}}rpx"></view>
+          <view class="h-cap" wx:if="{{item.label}}">{{item.label}}</view>
+        </view>
+      </view>
+      <view class="hourly-cap muted">截至 {{nowHour}}:00 的 24 小时访问节奏</view>
+    </view>
+
+    <!-- ② 14 天趋势：点击柱子下钻某一天 -->
+    <view class="card">
+      <view class="sec-head">
+        <view class="sec-title">近 14 天流量</view>
+        <view class="sec-cap" bindtap="goAnalytics">访问分析 ›</view>
+      </view>
+      <view class="bars">
+        <view class="bar-col" wx:for="{{seriesBars}}" wx:key="date" bindtap="pickDay" data-date="{{item.date}}">
+          <view class="b-top">
+            <view class="bar-pv {{item.date === picked ? 'on' : ''}}" style="height:{{item.pvH}}rpx"></view>
+            <view class="bar-uv" style="height:{{item.uvH}}rpx"></view>
+          </view>
+          <view class="bar-cap {{item.date === picked ? 'on' : ''}}">{{item.cap}}</view>
+        </view>
+      </view>
+      <view class="legend">
+        <view class="lg"><text class="lg-dot lg-pv"></text>PV 峰值 {{peak.pv}}</view>
+        <view class="lg"><text class="lg-dot lg-uv"></text>UV</view>
+        <view class="grow"></view>
+        <view class="sec-cap">合计 PV {{totalPv14}} · 日均 {{avgPv14}}</view>
+      </view>
+      <view class="pick-row" wx:if="{{picked}}">
+        <text class="pick-name">{{picked}}</text>
+        <text class="pick-v">PV {{pickedDay.pv || 0}} · UV {{pickedDay.uv || 0}}</text>
+        <text class="pick-go" bindtap="goDayDetail">看明细 ›</text>
+      </view>
+    </view>
+
+    <!-- ③ 今日流量结构：来源 / 设备 / 路径，比例条直读 -->
+    <view class="card">
+      <view class="sec-head">
+        <view class="sec-title">今日流量都从哪来</view>
+        <view class="sec-cap">{{todayLabel}}</view>
+      </view>
+      <view class="dist-name">来源</view>
+      <view class="dist" wx:for="{{refBars}}" wx:key="name">
+        <view class="dist-l"><view class="dist-bar"><view class="dist-fill" style="width:{{item.w}}%"></view></view></view>
+        <text class="dist-name-t">{{item.name}}</text>
+        <text class="dist-v">{{item.value}}</text>
+      </view>
+      <view class="empty small" wx:if="{{!refBars.length}}">今天还没有访客来源数据</view>
+      <view class="divider" wx:if="{{refBars.length && devBars.length}}"></view>
+      <view class="dist-name" wx:if="{{devBars.length}}">设备</view>
+      <view class="dist" wx:for="{{devBars}}" wx:key="name">
+        <view class="dist-l"><view class="dist-bar"><view class="dist-fill alt" style="width:{{item.w}}%"></view></view></view>
+        <text class="dist-name-t">{{item.name}}</text>
+        <text class="dist-v">{{item.value}}</text>
+      </view>
+      <view class="divider" wx:if="{{pathBars.length}}"></view>
+      <view class="dist-name" wx:if="{{pathBars.length}}">热门页面</view>
+      <view class="dist" wx:for="{{pathBars}}" wx:key="name">
+        <text class="dist-rank">{{index + 1}}</text>
+        <text class="dist-name-t ellp">{{item.name}}</text>
+        <text class="dist-v">{{item.value}}</text>
+      </view>
+    </view>
+
+    <!-- ④ AI 流水线状态：机器在干嘛、欠我多少活，全量状态只在这一处展示 -->
+    <view class="card ai-card">
+      <view class="sec-head">
+        <view class="sec-title">AI 流水线</view>
+        <view class="sec-cap" bindtap="goTasks">任务队列 ›</view>
+      </view>
+      <view class="ai-row">
+        <view class="ai-cell" bindtap="goAI">
+          <view class="ai-n {{ai.pendingItems > 0 ? 'hot' : ''}}">{{ai.pendingItems}}</view>
+          <view class="ai-cap">待审文案</view>
+        </view>
+        <view class="ai-cell" bindtap="goTasks">
+          <view class="ai-n">{{ai.queued}}</view>
+          <view class="ai-cap">排队任务</view>
+        </view>
+        <view class="ai-cell" bindtap="goTasks">
+          <view class="ai-n run {{ai.running > 0 ? 'on' : ''}}">{{ai.running}}</view>
+          <view class="ai-cap">执行中</view>
+        </view>
+        <view class="ai-cell" bindtap="goAI">
+          <view class="ai-n">{{ai.published7 || 0}}</view>
+          <view class="ai-cap">已发布稿</view>
+        </view>
+        <view class="ai-cell" bindtap="goTasks">
+          <view class="ai-n {{ai.failed ? 'bad' : ''}}">{{ai.failed}}</view>
+          <view class="ai-cap">失败待理</view>
+        </view>
+      </view>
+      <view class="ai-note warn" wx:if="{{!ai.workerOn}}">worker 通道未开启：服务端没配 LATIAOMEI_PIPELINE_TOKEN，任务只会排队不会被执行。</view>
+      <view class="ai-note" wx:elif="{{ai.failed > 0}}">有 {{ai.failed}} 个失败任务在等人处理：去「任务队列」重试或放弃。</view>
+      <view class="ai-note" wx:elif="{{ai.pendingItems > 0}}">{{ai.pendingItems}} 条 AI 稿在等你放行；不放行，机器永远不发。</view>
+      <view class="ai-note" wx:else>机器没欠账：内容发布后 AI 自动产稿，好了会亮在这里。</view>
+      <view class="row ai-links">
+        <text class="ai-link" bindtap="goAI">去工作台创作 ›</text>
+        <view class="grow"></view>
+        <text class="ai-link" bindtap="goTasks">看队列细节 ›</text>
+      </view>
+    </view>
+
+    <!-- ⑤ 内容库存 -->
+    <view class="card">
+      <view class="sec-head">
+        <view class="sec-title">内容库存</view>
+        <view class="sec-cap" bindtap="goContent">去管理 ›</view>
+      </view>
+      <view class="count-grid">
+        <view class="count" bindtap="navTo" data-url="/pages/reviews/reviews"><text class="c-num">{{content.reviews || 0}}</text><text class="c-cap">点评</text></view>
+        <view class="count" bindtap="navTo" data-url="/pages/shop-archive/shop-archive"><text class="c-num">{{content.shops || 0}}</text><text class="c-cap">店铺</text></view>
+        <view class="count"><text class="c-num">{{content.published || 0}}</text><text class="c-cap">已发布</text></view>
+        <view class="count" bindtap="goDrafts"><text class="c-num">{{content.drafts || 0}}</text><text class="c-cap">草稿</text></view>
+      </view>
+      <view class="count-grid" style="margin-top:20rpx">
+        <view class="count" bindtap="goRank" data-kind="tandian"><text class="c-num">{{content.tandian || 0}}</text><text class="c-cap">探店榜</text></view>
+        <view class="count" bindtap="goRank" data-kind="yushanfang"><text class="c-num">{{content.yushanfang || 0}}</text><text class="c-cap">私厨榜</text></view>
+        <view class="count" bindtap="navTo" data-url="/pages/wheel/wheel"><text class="c-num">{{content.wheel || 0}}</text><text class="c-cap">在盘</text></view>
+        <view class="count" bindtap="navTo" data-url="/pages/wishes/wishes"><text class="c-num">{{content.wishes || 0}}</text><text class="c-cap">愿望</text></view>
+      </view>
+    </view>
+
+    <!-- ⑥ 今日热门内容：谁在被看 -->
+    <view class="card" wx:if="{{topReviews.length || topShops.length}}">
+      <view class="sec-head">
+        <view class="sec-title">今日热门</view>
+        <view class="sec-cap">按访问次数</view>
+      </view>
+      <view class="two-col">
+        <view class="col">
+          <view class="col-name">菜品/内容</view>
+          <view class="hot" wx:for="{{topReviews}}" wx:key="name">
+            <text class="hot-rank">{{index + 1}}</text>
+            <text class="grow ellp">{{item.name}}</text>
+            <text class="hot-v">{{item.value}}</text>
+          </view>
+          <view class="empty small" wx:if="{{!topReviews.length}}">今天还没人看</view>
+        </view>
+        <view class="col">
+          <view class="col-name">店铺</view>
+          <view class="hot" wx:for="{{topShops}}" wx:key="name">
+            <text class="hot-rank">{{index + 1}}</text>
+            <text class="grow ellp">{{item.name}}</text>
+            <text class="hot-v">{{item.value}}</text>
+          </view>
+          <view class="empty small" wx:if="{{!topShops.length}}">暂无店铺访问</view>
+        </view>
+      </view>
+    </view>
+
+    <!-- ⑦ 快捷管理 -->
+    <view class="card">
+      <view class="sec-head"><view class="sec-title">快捷管理</view></view>
+      <view class="quick">
+        <view class="q-item" wx:if="{{canWrite}}" bindtap="goReviewEdit" data-kind="tandian">
+          <view class="q-ico" style="background:var(--gold)">写</view>
+          <view class="q-name">录入探店</view>
+        </view>
+        <view class="q-item" wx:if="{{canWrite}}" bindtap="goReviewEdit" data-kind="yushanfang">
+          <view class="q-ico" style="background:var(--gold-soft)">厨</view>
+          <view class="q-name">录入私厨</view>
+        </view>
+        <view class="q-item" bindtap="goContent">
+          <view class="q-ico" style="background:var(--ink)">榜</view>
+          <view class="q-name">榜单/评分</view>
+        </view>
+        <view class="q-item" bindtap="goAI">
+          <view class="q-ico" style="background:var(--rust)">工</view>
+          <view class="q-name">工作台·放行</view>
+        </view>
+        <view class="q-item" bindtap="navTo" data-url="/pages/shop-archive/shop-archive">
+          <view class="q-ico" style="background:var(--ink-faint)">店</view>
+          <view class="q-name">店铺档案</view>
+        </view>
+        <view class="q-item" bindtap="navTo" data-url="/pages/tastes/tastes">
+          <view class="q-ico" style="background:var(--gold-soft)">签</view>
+          <view class="q-name">口味标签</view>
+        </view>
+        <view class="q-item" bindtap="navTo" data-url="/pages/wheel/wheel">
+          <view class="q-ico" style="background:var(--ok)">盘</view>
+          <view class="q-name">转盘管理</view>
+        </view>
+        <view class="q-item" bindtap="goAnalytics">
+          <view class="q-ico" style="background:var(--ink-soft)">析</view>
+          <view class="q-name">访问分析</view>
+        </view>
+        <view class="q-item" bindtap="navTo" data-url="/pages/settings/settings">
+          <view class="q-ico" style="background:#3a352e">设</view>
+          <view class="q-name">站点设置</view>
+        </view>
+      </view>
+    </view>
+
+    <!-- ⑧ 运行状态（折叠：默认只一行，点开看细节） -->
+    <view class="card" wx:if="{{runtime}}">
+      <view class="row-between" bindtap="toggleRuntime">
+        <view class="sec-title">服务运行状态</view>
+        <view class="row">
+          <text class="run-dot {{runtime.ok ? 'ok' : 'bad'}}"></text>
+          <text class="sec-cap">{{runtimeOpen ? '收起' : '展开'}}</text>
+        </view>
+      </view>
+      <block wx:if="{{runtimeOpen}}">
+        <view class="kv"><text class="k">Go 版本</text><text class="v">{{runtime.go_version}}</text></view>
+        <view class="kv"><text class="k">在线时长</text><text class="v">{{uptimeText}}</text></view>
+        <view class="kv"><text class="k">内存占用</text><text class="v">{{memText}}</text></view>
+        <view class="kv"><text class="k">DB 体积</text><text class="v">{{dbText}}</text></view>
+        <view class="kv"><text class="k">图片库</text><text class="v">{{uploadText}}</text></view>
+      </block>
+    </view>
+
+    <view class="foot muted" bindtap="reload">下拉或点此刷新 · 数据每 30 秒落盘一次</view>
+  </block>
+</view>

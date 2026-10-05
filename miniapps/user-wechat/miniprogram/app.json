@@ -1,0 +1,64 @@
+{
+  "pages": [
+    "pages/ai/ai",
+    "pages/index/index",
+    "pages/list/list",
+    "pages/detail/detail",
+    "pages/shop/shop",
+    "pages/my/my",
+    "pages/wish/wish"
+  ],
+  "window": {
+    "backgroundTextStyle": "dark",
+    "navigationBarBackgroundColor": "#fff6e8",
+    "navigationBarTitleText": "辣条妹的御膳房",
+    "navigationBarTextStyle": "black",
+    "backgroundColor": "#fff6e8"
+  },
+  "permission": {
+    "scope.userLocation": {
+      "desc": "只在你主动开「附近」时用来挑离你近的店；定位不外传、不存储"
+    }
+  },
+  "requiredPrivateInfos": [
+    "getLocation"
+  ],
+  "tabBar": {
+    "color": "#a89f8f",
+    "selectedColor": "#ff5a1f",
+    "backgroundColor": "#1c1712",
+    "borderStyle": "black",
+    "list": [
+      {
+        "pagePath": "pages/index/index",
+        "text": "恰啥"
+      },
+      {
+        "pagePath": "pages/list/list",
+        "text": "榜单"
+      },
+      {
+        "pagePath": "pages/ai/ai",
+        "text": "辣条妹"
+      },
+      {
+        "pagePath": "pages/wish/wish",
+        "text": "许愿墙"
+      },
+      {
+        "pagePath": "pages/my/my",
+        "text": "本人"
+      }
+    ],
+    "custom": true
+  },
+  "plugins": {
+    "WechatSI": {
+      "version": "0.3.5",
+      "provider": "wx069ba97219f66d99"
+    }
+  },
+  "style": "v2",
+  "sitemapLocation": "sitemap.json",
+  "lazyCodeLoading": "requiredComponents"
+}

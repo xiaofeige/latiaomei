@@ -1,0 +1,6 @@
+{
+  "component": true,
+  "usingComponents": {
+    "ro-banner": "/components/ro-banner/index"
+  }
+}

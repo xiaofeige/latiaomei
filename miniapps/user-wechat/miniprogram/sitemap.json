@@ -1,0 +1,4 @@
+{
+  "desc": "内容全部允许被微信搜索索引（sitemap 规则：全部页收录）",
+  "rules": [{ "action": "allow", "page": "*" }]
+}

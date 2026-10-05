@@ -1,0 +1,22 @@
+<view class="wrap">
+  <view class="card" wx:for="{{sections}}" wx:key="title" wx:for-item="sec">
+    <view class="title sec-title">{{sec.title}}</view>
+    <view class="field" wx:for="{{sec.fields}}" wx:key="key" wx:for-item="f">
+      <view class="field-label">{{f.label}}</view>
+
+      <switch wx:if="{{f.type === 'switch'}}" checked="{{f.value === '1'}}" color="#b58f4a"
+              data-k="{{f.key}}" bindchange="onSwitch" />
+
+      <textarea wx:elif="{{f.type === 'textarea'}}" class="textarea" auto-height
+                value="{{f.value}}" data-k="{{f.key}}" bindinput="onInput" />
+
+      <input wx:else class="input" placeholder="{{f.ph || ''}}" placeholder-class="ph" value="{{f.value}}"
+             data-k="{{f.key}}" bindinput="onInput" />
+    </view>
+  </view>
+
+  <view class="save-bar">
+    <button class="btn" loading="{{saving}}" bindtap="save">保存设置</button>
+  </view>
+  <view class="muted tip">只提交改动过的项；保存后前台缓存会立即失效。</view>
+</view>

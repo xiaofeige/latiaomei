@@ -1,0 +1,87 @@
+/* 弹幕带：暖炭黑底蜜蜡黄跑马灯，无缝循环（盘内容重复一遍，-50% 处无缝） */
+.mq { overflow: hidden; background: var(--charcoal); border-radius: 16rpx; margin: 20rpx 0 0; padding: 12rpx 0; white-space: nowrap; }
+.mq-in { display: inline-block; animation: mq 26s linear infinite; }
+.mq-it { display: inline-block; padding: 0 24rpx; font-size: 22rpx; font-weight: 900; letter-spacing: 2rpx; color: #ffc53d; }
+@keyframes mq { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+
+/* Tab 按压反馈 */
+.wt-press { transform: scale(.96); opacity: .85; }
+
+/* 站头 IP 立牌：暖炭渐变 + 微内高光，不再是冷黑底荧光字（对齐 web 首页 .hm-hero） */
+.hero {
+  display: flex; align-items: center; background: linear-gradient(140deg, #2c231a, #1a140e);
+  border: 4rpx solid rgba(255, 255, 255, .07); border-radius: 28rpx; padding: 26rpx 28rpx;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .08), 10rpx 10rpx 0 rgba(26, 20, 14, .14);
+}
+.hero-svg { width: 170rpx; height: 220rpx; flex-shrink: 0; }
+.hero-in { flex: 1; min-width: 0; margin-left: 10rpx; }
+.hero-ik { font-size: 18rpx; letter-spacing: 4rpx; font-weight: 900; color: #ffc53d; }
+.hero-name { font-size: 44rpx; font-weight: 900; letter-spacing: -1rpx; color: #fff; line-height: 1.15; margin: 4rpx 0 10rpx; text-shadow: 6rpx 6rpx 0 #ff5a1f; }
+.hero-badge { display: inline-block; font-size: 22rpx; font-weight: 900; color: #111; background: linear-gradient(90deg, #ffc53d, #ffdf8a); border: 5rpx solid #111; border-radius: 999rpx; padding: 6rpx 20rpx; box-shadow: 6rpx 6rpx 0 rgba(26, 20, 14, .25); transform: rotate(-1.5deg); }
+.hero-cnt { font-size: 20rpx; font-weight: 800; color: #a29a8c; margin-top: 14rpx; }
+
+.featured .rc { border-color: #111; box-shadow: 10rpx 10rpx 0 rgba(255, 197, 61, .28); }
+
+/* 转盘区（暖炭面板 + 中性发丝描边，只让蜜蜡黄干「选中」这一件事） */
+.wz {
+  background: linear-gradient(165deg, #292018, #191310); border: 4rpx solid rgba(255, 255, 255, .07);
+  border-radius: 24rpx; padding: 30rpx 26rpx; margin: 24rpx 0; color: #f4efe6;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .07), 10rpx 10rpx 0 rgba(26, 20, 14, .14);
+}
+.wz-hd { text-align: center; font-size: 38rpx; font-weight: 900; letter-spacing: -1rpx; }
+.wz-hd .em { color: #ffc53d; margin: 0 10rpx; font-style: normal; }
+.wtabs {
+  display: flex; gap: 10rpx; background: #120d09; border: 4rpx solid rgba(255, 255, 255, .09);
+  border-radius: 24rpx; padding: 8rpx; margin: 22rpx auto;
+}
+.wt { flex: 1; text-align: center; font-size: 28rpx; font-weight: 900; color: #a89f8f; border-radius: 18rpx; padding: 14rpx 0; }
+.wt.on { background: #ffc53d; color: #111; }
+/* 附近开关药丸：未开中性发丝描边，开了蜜蜡黄实底（状态一目了然） */
+.wnear {
+  display: block; width: fit-content; margin: -4rpx auto 18rpx; padding: 10rpx 28rpx;
+  border: 4rpx solid rgba(255, 255, 255, .16); border-radius: 999rpx;
+  font-size: 22rpx; font-weight: 900; color: #c4baa8;
+}
+.wnear.on { background: #ffc53d; border-color: #ffc53d; color: #111; }
+
+.wcard {
+  background: rgba(255, 255, 255, .05); border: 4rpx solid rgba(255, 255, 255, .09);
+  border-radius: 28rpx; padding: 24rpx 18rpx 20rpx; text-align: center;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .07);
+}
+.wq { font-size: 22rpx; font-weight: 800; color: #a29a8c; letter-spacing: 3rpx; margin-bottom: 12rpx; }
+.wftip { font-size: 20rpx; font-weight: 800; color: #a29a8c; margin-top: 18rpx; letter-spacing: 1rpx; }
+
+/* 味觉占卜 */
+.wf-left {
+  display: flex; align-items: center; gap: 12rpx; margin-top: 22rpx;
+  background: rgba(255, 197, 61, .06); border: 4rpx solid rgba(255, 255, 255, .09);
+  border-radius: 20rpx; padding: 16rpx 18rpx;
+}
+.wf-icon { font-size: 34rpx; flex-shrink: 0; }
+.wf-txt { flex: 1; font-size: 24rpx; font-weight: 800; color: #e0dfd8; line-height: 1.45; }
+.wf-go { flex-shrink: 0; font-size: 20rpx; font-weight: 900; background: #ffc53d; color: #111; padding: 8rpx 20rpx; border-radius: 28rpx; }
+.wf-moods { display: flex; gap: 10rpx; margin-top: 14rpx; }
+.wf-mood {
+  flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2rpx;
+  background: rgba(255, 255, 255, .06); border: 4rpx solid rgba(255, 255, 255, .1);
+  border-radius: 18rpx; padding: 12rpx 0; font-size: 20rpx; font-weight: 900; color: #c6bcab;
+}
+.wf-mood .e { font-size: 32rpx; line-height: 1.15; }
+.wf-mood:active { background: rgba(255, 197, 61, .15); border-color: #ffc53d; }
+
+.shopline { white-space: nowrap; width: 100%; }
+.shoppill {
+  display: inline-block; background: #fffdf6; border: 4rpx solid #111; border-radius: 999rpx; padding: 12rpx 28rpx;
+  margin-right: 16rpx; font-size: 24rpx; font-weight: 900; color: #111;
+  box-shadow: 6rpx 6rpx 0 rgba(0, 0, 0, .12);
+}
+
+/* 许愿墙入口：珊瑚贴纸，和订阅条拉开主次 */
+.wish-banner { background: #ff6d8f; box-shadow: 8rpx 8rpx 0 rgba(0, 0, 0, .16); }
+.wish-banner .tt { color: #111; }
+.wish-banner .dd { color: rgba(48, 10, 24, .72); }
+.wish-banner .btn { background: #fffdf6; color: #111; }
+
+/* 自定义 tab bar 是悬浮层，页面不自动留位：底部多留 176rpx+安全区 */
+.wrap { padding-bottom: calc(240rpx + env(safe-area-inset-bottom)); }

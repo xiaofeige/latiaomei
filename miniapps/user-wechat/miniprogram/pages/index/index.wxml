@@ -1,0 +1,98 @@
+<view class="wrap">
+  <!-- 站头：辣条妹 IP 立牌（全站吉祥物，跟 web 首页同一张脸） -->
+  <view class="hero rise">
+    <image class="hero-svg" src="/images/latiaomei-hero.svg" mode="aspectFit" />
+    <view class="hero-in">
+      <view class="hero-ik">LATIAOMEI · 杭州美食第一人</view>
+      <view class="hero-name">{{site.site_title || '辣条妹的御膳房'}}</view>
+      <view class="hero-badge">🌶 {{site.site_tagline || '10年吃遍杭州 · 只恰真的'}}</view>
+      <view class="hero-cnt">已验 {{counters.reviews || 0}} 道 · {{counters.shops || 0}} 家店 · 全是本人恰过</view>
+    </view>
+  </view>
+
+  <!-- 弹幕带：她刚判过的菜，全站唯一 marquee（对齐 web .mq） -->
+  <view class="mq rise rise-1" wx:if="{{dm.length}}">
+    <view class="mq-in">
+      <text class="mq-it" wx:for="{{dm}}" wx:key="*this">{{item}}</text>
+      <text class="mq-it" wx:for="{{dm}}" wx:key="*this">{{item}}</text>
+    </view>
+  </view>
+
+  <!-- 今天吃啥子 · 转一下（对齐 web 站：探店/御膳房双盘） -->
+  <view class="wz rise rise-2">
+    <view class="wz-hd">今天吃啥子<text class="em">·</text>转一下</view>
+    <view class="wtabs">
+      <view class="wt {{wheelTab === 'td' ? 'on' : ''}}" data-w="td" bindtap="switchWheel" hover-class="wt-press">🌶 探店</view>
+      <view class="wt {{wheelTab === 'yu' ? 'on' : ''}}" data-w="yu" bindtap="switchWheel" hover-class="wt-press">🍳 御膳房</view>
+    </view>
+    <!-- 探店盘专属：附近辣条妹严选（要定位才开，不给就全市） -->
+    <view class="wnear {{geoOn ? 'on' : ''}}" wx:if="{{wheelTab === 'td'}}" bindtap="toggleNear" hover-class="wt-press">
+      {{geoBusy ? '📡 定位中…' : geoLabel}}
+    </view>
+    <view class="wcard">
+      <view class="wq">{{wheelTab === 'yu' ? '今天家里做什么' : '今天出去吃什么'}}</view>
+      <wheel segs="{{wheelSegs}}" tiers="{{tiers}}" bind:pick="onWheelPick" />
+      <view class="wftip">🌶 {{wheelTip}}</view>
+    </view>
+
+    <!-- 味觉占卜 + 心情快捷入口 -->
+    <view class="wf-left" wx:if="{{fortune.text}}">
+      <text class="wf-icon">🔮</text>
+      <text class="wf-txt">{{fortune.text}}</text>
+      <text class="wf-go" wx:if="{{fortune.slug}}" data-t="{{fortune.slug}}" bindtap="toTaste">认命 ›</text>
+    </view>
+    <view class="wf-moods">
+      <view class="wf-mood" wx:for="{{moods}}" wx:key="n" data-t="{{item.t}}" bindtap="toTaste">
+        <text class="e">{{item.e}}</text><text>{{item.n}}</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 订阅辣椒条 -->
+  <view class="sub-banner rise rise-3" wx:if="{{canSub}}" bindtap="doSub" hover-class="p-press">
+    <view class="txt">
+      <view class="tt">开饭提醒</view>
+      <view class="dd">新的辣评落地，第一条喊你恰</view>
+    </view>
+    <view class="btn">订阅</view>
+  </view>
+
+  <!-- 许愿墙入口 -->
+  <view class="sub-banner wish-banner rise rise-3" bindtap="toWish" hover-class="p-press">
+    <view class="txt">
+      <view class="tt">🙏 许愿墙 · 你来点菜</view>
+      <view class="dd">想让辣条妹替你踩哪个坑？递条子，本人挨个翻牌</view>
+    </view>
+    <view class="btn">许愿</view>
+  </view>
+
+  <!-- 今日推荐 -->
+  <block wx:if="{{featured}}">
+    <view class="sect-hd"><text class="t">辣条妹今日推荐</text><view class="ln"></view><text class="more" bindtap="toList" data-q="sort=rank">全部 ›</text></view>
+    <review-card review="{{featured}}" tiers="{{tiers}}" class="featured" />
+  </block>
+
+  <view class="sect-hd" data-q="sort=new" bindtap="toList">
+    <text class="t">刚刚上桌</text><view class="ln"></view><text class="more">更多 ›</text>
+  </view>
+  <review-card wx:for="{{latest}}" wx:key="slug" review="{{item}}" tiers="{{tiers}}" />
+
+  <view class="sect-hd" data-q="tier=la" bindtap="toList">
+    <text class="t">避雷区 · 别浪费钱</text><view class="ln"></view><text class="more">全部 ›</text>
+  </view>
+  <review-card wx:for="{{avoid}}" wx:key="slug" review="{{item}}" tiers="{{tiers}}" />
+
+  <view class="sect-hd" data-q="kind=yushanfang" bindtap="toList">
+    <text class="t">御膳房 · 她亲手做的</text><view class="ln"></view><text class="more">全部 ›</text>
+  </view>
+  <review-card wx:for="{{yushanfang}}" wx:key="slug" review="{{item}}" tiers="{{tiers}}" />
+
+  <view class="sect-hd"><text class="t">她的常驻食堂</text><view class="ln"></view></view>
+  <scroll-view scroll-x show-scrollbar="{{false}}" class="shopline">
+    <view class="shoppill" wx:for="{{shops}}" wx:key="slug" bindtap="toShop" data-slug="{{item.slug}}" hover-class="p-press">
+      {{item.name}}{{item.city ? ' · ' + item.city : ''}}
+    </view>
+  </scroll-view>
+
+  <view class="empty" wx:if="{{!loading && !featured && !latest.length}}">还没内容，等辣条妹去恰</view>
+</view>

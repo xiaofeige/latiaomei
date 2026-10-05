@@ -1,0 +1,7 @@
+{
+  "navigationBarTitleText": "AI 工坊",
+  "enablePullDownRefresh": true,
+  "usingComponents": {
+    "ro-banner": "/components/ro-banner/index"
+  }
+}
