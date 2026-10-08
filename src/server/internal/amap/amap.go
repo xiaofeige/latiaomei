@@ -143,6 +143,59 @@ func (c *Client) SearchNearby(ctx context.Context, lat, lng string, maxN int) ([
 	return pickPOIs(raw, maxN)
 }
 
+// Discover 按关键词搜全城餐饮 POI（v5/place/text，城市限定），AI 巡逻的候选店发现口。
+// 高德按相关性/热度排，拿到的是“这家店在地图上存在且有人搜”的真实在案店，
+// 附评分/人均/扫街榜痕迹，比模型报店名靠谱得多（模型爱编不存在的名）。
+func (c *Client) Discover(ctx context.Context, keyword string, maxN int) ([]POI, error) {
+	if c.Key == "" {
+		return nil, fmt.Errorf("amap: 未配置 key")
+	}
+	keyword = strings.TrimSpace(keyword)
+	if keyword == "" {
+		return nil, nil
+	}
+	if maxN <= 0 || maxN > 25 {
+		maxN = 15
+	}
+	base := c.Base
+	if base == "" {
+		base = "https://restapi.amap.com"
+	}
+	city := c.City
+	if city == "" {
+		city = "杭州"
+	}
+	cli := c.HTTP
+	if cli == nil {
+		cli = &http.Client{Timeout: 8 * time.Second}
+	}
+	q := url.Values{}
+	q.Set("keywords", keyword)
+	q.Set("types", typeFood)
+	q.Set("city", city)
+	q.Set("citylimit", "true")
+	q.Set("show_fields", "business")
+	q.Set("page_size", fmt.Sprint(maxN))
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet,
+		strings.TrimRight(base, "/")+"/v5/place/text?"+q.Encode()+"&key="+url.QueryEscape(c.Key), nil)
+	if err != nil {
+		return nil, err
+	}
+	res, err := cli.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("amap: 网络: %w", err)
+	}
+	defer res.Body.Close()
+	raw, err := io.ReadAll(io.LimitReader(res.Body, 512<<10))
+	if err != nil {
+		return nil, fmt.Errorf("amap: 读包: %w", err)
+	}
+	if res.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("amap: HTTP %d %s", res.StatusCode, trim(string(raw), 80))
+	}
+	return pickPOIs(raw, maxN)
+}
+
 // pickPOI 解析高德回包：status!=1 报错；命中多条时优先名字对得上的。
 func pickPOI(raw []byte, want string) (*POI, error) {
 	j, err := decodePlaces(raw)

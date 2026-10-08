@@ -132,7 +132,7 @@
     ['视频内容', [['video', '🎬', '视频工坊'], ['release', '🚦', '待放行'],
       ['tasks', '🛠', '任务队列'], ['cmd', '📣', '指令台账']]],
     ['内容管理', [['reviews', '🌶', '点评'], ['shops', '🏪', '店铺'],
-      ['tastes', '🏷', '标签'], ['uploads', '🖼', '图库']]],
+      ['tastes', '🏷', '标签'], ['uploads', '🖼', '图库'], ['patrol', '🛰', 'AI巡逻榜']]],
     ['站点', [['settings', '⚙', '站点配置'], ['maint', '🧹', '维护']]],
   ];
   function sideHTML(active) {
@@ -1272,9 +1272,142 @@
     } catch (e) { panel.innerHTML = errBox(e); }
   }
 
+  /* ---------------- v14 AI 巡逻榜 ---------------- */
+  const pvf = { level: '', status: 'active', sort: 'rank', q: '', page: 1 };
+  async function vPatrol() {
+    shell('patrol', load('正在读巡逻台账…'));
+    const panel = document.getElementById('panel');
+    try {
+      const qs = new URLSearchParams({ level: pvf.level, status: pvf.status, sort: pvf.sort, q: pvf.q, page: String(pvf.page), size: '20' });
+      const [st, list] = await Promise.all([
+        api.get('/api/admin/patrol'),
+        api.get('/api/admin/patrol/ai-rank?' + qs.toString()),
+      ]);
+      const s = st.settings || {}, c = st.counts || {};
+      const byLevel = c.by_level || {};
+      const LV = [['solid', '靠谱'], ['foggy', '有水分'], ['bust', '不建议'], ['unknown', '没底细']];
+      const conf = st.running ? '<span class="pill run">巡逻中…</span>' : '<span class="pill">闲者</span>';
+      let body = '<div class="box"><h4>巡逻面板 · 定时盘全网风评（纯 AI，不进探店榜）</h4>' +
+        '<div class="grid c4">' +
+        '<div class="stat"><small>在榜判例</small><b>' + num(c.active) + '</b><small>下架 ' + num(c.retired) + '</small></div>' +
+        '<div class="stat"><small>上次巡逻</small><b>' + (c.last_patrol_at ? stamp(num(c.last_patrol_at)) : '没跑过') + '</b><small>' + esc(s.patrol_last_result || '') + '</small></div>' +
+        '<div class="stat"><small>模型</small><b>' + esc(st.model) + '</b><small>联网' + (st.llm_search ? '已开' : '未开') + ' · 高德' + (st.amap_ready ? '已接' : '未接') + '</small></div>' +
+        '<div class="stat"><small>档位分布</small><b style="font-size:13px">' + LV.map((l) => l[1] + ' ' + num(byLevel[l[0]])).join('、') + '</b><small>' + conf + '</small></div>' +
+        '</div>';
+
+      // 巡逻参数（存 settings，改完即生效不用重启）
+      body += '<div class="adm-form" style="margin-top:10px"><div class="row">' +
+        sel('定时巡逻', 'p_en', s.patrol_enabled || '0', [['1', '开'], ['0', '关']]) +
+        inp('间隔（小时）', 'p_int', s.patrol_interval_hours || '24') +
+        inp('每轮鉴几家', 'p_batch', s.patrol_batch_size || '5') +
+        inp('判过 N 天不重判', 'p_rep', s.patrol_repoll_days || '30') +
+        inp('榜单容量上限', 'p_max', s.patrol_max_entries || '200') +
+        '</div>' +
+        inp('候选发现关键词（高德，逗号分隔）', 'p_kw', s.patrol_keywords || '') +
+        '<div class="btnrow"><button class="btn p" type="button" id="psave">存参数</button>' +
+        '<button class="btn" type="button" id="prun">🛰 立即整轮巡逻</button>' +
+        '<span class="hint" style="margin:0">整轮异步跑（每店联网检索约半分钟）；下面输入框点名鉴店才同步等判决</span></div>' +
+        '<div class="row" style="margin-top:8px">' + inp('点名鉴店（逗号分隔，≤12 家）', 'p_names', '') +
+        '<button class="btn p" type="button" id="prunone">鉴这几家</button></div></div></div>';
+
+      // 榜单管理
+      body += '<div class="box" style="margin-top:11px"><h4>AI 判例台账 · 晋升才进探店榜（走人工放行）</h4>' +
+        '<div class="btnrow">' +
+        sel('等级', 'p_lv', pvf.level, [['', '全部']].concat(LV)) +
+        sel('状态', 'p_st', pvf.status, [['active', '在榜'], ['retired', '已下架'], ['all', '全部']]) +
+        sel('排序', 'p_sort', pvf.sort, [['rank', '名次'], ['score', '分数'], ['patrol', '最近巡逻'], ['new', '最新入库']]) +
+        inp('搜店名', 'p_q', pvf.q) + '<button class="btn" type="button" id="pgo">筛</button></div>';
+      const items = list.items || [];
+      if (!items.length) {
+        body += '<div class="hint">还没有判例。上面点「立即整轮巡逻」让 AI 出门。</div>';
+      } else {
+        body += '<div class="tl" style="margin-top:9px">' + items.map((a) => {
+          const lv = { solid: 'ok', foggy: 'run', bust: 'no', unknown: '' }[a.level] || '';
+          const sigs = (a.signals || []).slice(0, 4).map((x) =>
+            '<div class="hint">' + esc(x.k) + '：' + esc(x.v) + '</div>').join('');
+          const plats = (a.platforms || []).map((x) => '<div class="hint">' + esc(x.k) + '·' + esc(x.v) + '</div>').join('');
+          return '<div class="tl-item"><div class="hd">' +
+            '<span class="pill">#' + num(a.rank_no) + '</span>' +
+            '<b class="t">' + esc(a.shop_name) + '</b>' +
+            '<span class="pill ' + lv + '">' + esc(a.level_label) + ' ' + num(a.score).toFixed(1) + '</span>' +
+            '<span class="hint" style="margin:0">把握' + Math.round(num(a.confidence) * 100) + '% · ' + (a.last_patrol_at ? stamp(a.last_patrol_at) : '—') + '</span></div>' +
+            (a.judge ? '<div class="hint">🔨 ' + esc(a.judge) + (a.district ? ' · ' + esc(a.district) : '') + '</div>' : '') +
+            sigs + (plats ? '<details style="margin:4px 0"><summary class="hint" style="cursor:pointer">各平台盘查（' + (a.platforms || []).length + '）</summary>' + plats + '</details>' : '') +
+            (a.promoted_review_id ? '<div class="hint" style="color:#2f7d32">已晋升 → 草稿 #' + num(a.promoted_review_id) + '，去「点评」审</div>' : '') +
+            '<div class="act">' +
+            (a.promoted_review_id ? '' : '<button class="btn sm p" type="button" data-promote=' + num(a.id) + '>晋升成草稿</button>') +
+            '<button class="btn sm" type="button" data-rejudge="' + esc(a.shop_name) + '">重判</button>' +
+            '<button class="btn sm" type="button" data-retire=' + num(a.id) + ' data-st="' + (a.status === 'active' ? 'retired' : 'active') + '">' + (a.status === 'active' ? '下架' : '上架') + '</button>' +
+            '<button class="btn sm d" type="button" data-del=' + num(a.id) + '>删</button></div></div>';
+        }).join('') + '</div>';
+      }
+      if (num(list.total) > 20) {
+        const pages = Math.ceil(num(list.total) / 20);
+        body += '<div class="btnrow" style="margin-top:8px">' +
+          (pvf.page > 1 ? '<button class="btn sm" type="button" id="pprev">上一页</button>' : '') +
+          '<span class="hint" style="margin:0">第 ' + pvf.page + ' / ' + pages + ' 页</span>' +
+          (pvf.page < pages ? '<button class="btn sm" type="button" id="pnext">下一页</button>' : '') + '</div>';
+      }
+      body += '</div>';
+      panel.innerHTML = body;
+
+      document.getElementById('psave').addEventListener('click', async () => {
+        try {
+          await api.put('/api/admin/settings', { settings: {
+            patrol_enabled: val('p_en'), patrol_interval_hours: val('p_int'), patrol_batch_size: val('p_batch'),
+            patrol_repoll_days: val('p_rep'), patrol_max_entries: val('p_max'), patrol_keywords: val('p_kw'),
+          } });
+          L.toast('巡逻参数已存，下一轮生效');
+        } catch (e) { L.toast(e.message); }
+      });
+      document.getElementById('prun').addEventListener('click', async () => {
+        try { const r = await api.post('/api/admin/patrol/run', {}); L.toast('已出发，过几分钟来刷台账'); vPatrol(); }
+        catch (e) { L.toast(e.message); }
+      });
+      document.getElementById('prunone').addEventListener('click', async (b) => {
+        const names = val('p_names').split(/[,，\s]+/).filter(Boolean);
+        if (!names.length) { L.toast('先写店名'); return; }
+        const btn = b.target; btn.disabled = true; btn.textContent = '联网盘风中…（别关页）';
+        try {
+          const r = await api.post('/api/admin/patrol/run', { shops: names });
+          L.toast('判完了：成 ' + num(r.stats.done) + ' 败 ' + num(r.stats.failed));
+          vPatrol();
+        } catch (e) { L.toast(e.message); btn.disabled = false; btn.textContent = '鉴这几家'; }
+      });
+      const goFilter = () => { pvf.level = val('p_lv'); pvf.status = val('p_st'); pvf.sort = val('p_sort'); pvf.q = val('p_q'); pvf.page = 1; vPatrol(); };
+      document.getElementById('pgo').addEventListener('click', goFilter);
+      const prev = document.getElementById('pprev'), next = document.getElementById('pnext');
+      if (prev) prev.addEventListener('click', () => { pvf.page--; vPatrol(); });
+      if (next) next.addEventListener('click', () => { pvf.page++; vPatrol(); });
+      panel.querySelectorAll('[data-promote]').forEach((b) => b.addEventListener('click', async () => {
+        if (!confirm('把这条 AI 判决晋升成探店榜草稿？（还要你本人去吃、审完发布才算数）')) return;
+        try { const r = await api.post('/api/admin/patrol/ai-rank/' + b.getAttribute('data-promote') + '/promote', {}); L.toast(r.hint || '已进草稿'); vPatrol(); }
+        catch (e) { L.toast(e.message); }
+      }));
+      panel.querySelectorAll('[data-rejudge]').forEach((b) => b.addEventListener('click', async () => {
+        const btn = b; btn.disabled = true; btn.textContent = '盘风中…';
+        try {
+          await api.post('/api/admin/patrol/run', { shops: [btn.getAttribute('data-rejudge')] });
+          L.toast('重判完成'); vPatrol();
+        } catch (e) { L.toast(e.message); btn.disabled = false; btn.textContent = '重判'; }
+      }));
+      panel.querySelectorAll('[data-retire]').forEach((b) => b.addEventListener('click', async () => {
+        try { await api.post('/api/admin/patrol/ai-rank/' + b.getAttribute('data-retire') + '/status', { status: b.getAttribute('data-st') }); vPatrol(); }
+        catch (e) { L.toast(e.message); }
+      }));
+      panel.querySelectorAll('[data-del]').forEach((b) => b.addEventListener('click', async () => {
+        if (!confirm('删掉这条判例？')) return;
+        try { await api.del('/api/admin/patrol/ai-rank/' + b.getAttribute('data-del')); vPatrol(); }
+        catch (e) { L.toast(e.message); }
+      }));
+      if (st.running) scheduleOps(() => { if (location.hash.indexOf('#/patrol') === 0) vPatrol(); }, 20000);
+    } catch (e) { panel.innerHTML = errBox(e); }
+  }
+  const val = (n) => { const el = document.querySelector('[name=' + n + ']'); return el ? el.value.trim() : ''; };
+
   /* ---------------- 路由 ---------------- */
   function vVideoRoute() { return hashParam('id') ? vProject() : vVideo(); }
-  const VIEWS = { overview: vOverview, video: vVideoRoute, release: vRelease, tasks: vTasks, cmd: vCmd, reviews: vReviews, shops: vShops, tastes: vTastes, settings: vSettings, uploads: vUploads, maint: vMaint };
+  const VIEWS = { overview: vOverview, video: vVideoRoute, release: vRelease, tasks: vTasks, cmd: vCmd, reviews: vReviews, shops: vShops, tastes: vTastes, settings: vSettings, uploads: vUploads, maint: vMaint, patrol: vPatrol };
   function render() {
     if (!csrf) { loginView(''); return; }
     stopOpsPoll();

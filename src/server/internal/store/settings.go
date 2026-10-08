@@ -56,6 +56,16 @@ var DefaultSettings = map[string]string{
 	// happyhorse（token-plan 视频生成模型）开关：1=项目出片时允许把人物镜头交给
 	// happyhorse 生成动态片段；0=全部走 hyperframes。模型名由 worker 侧 .env 配。
 	"pipeline_happyhorse": "1",
+	// ---- v14 AI 巡逻：定时互联网盘风评，产独立客观榜（ai_rank）----
+	// 巡逻在 Go 服务端后台协程里跑：LLM 联网检索（enable_search）+ 高德 POI 当证据，
+	// 逐店出 AI 判决。纯 AI 产物不进探店榜，只在「AI 客观榜」分区展示；
+	// 辣条妹 promote 才落 reviews draft 走人工放行铁律。
+	"patrol_enabled":        "1",                    // 定时巡逻总开关
+	"patrol_interval_hours": "24",                   // 两轮巡逻最小间隔（小时）
+	"patrol_batch_size":     "5",                    // 每轮鉴几家新店（LLM 联网检索有成本，小步慢盘）
+	"patrol_repoll_days":    "30",                   // 一家店判过后多少天内不重判（新店起风评不会一天变天）
+	"patrol_keywords":       "杭帮菜,面馆,小吃快餐,火锅,烧烤,茶馆", // 高德关键词发现池，逗号分隔
+	"patrol_max_entries":    "200",                  // 榜单容量上限：到了就先重判旧店，不再吸新
 }
 
 // SettingKeys 是后台可编辑的白名单，避免把内部 key 也暴露出去。

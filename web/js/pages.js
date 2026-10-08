@@ -247,6 +247,7 @@ window.PAGES = (function () {
 
     const ent = '<div class="ent">' +
       '<a href="/rank" data-track><span class="ic">🏆</span><span><b>排行榜</b><small>封神 · 避雷 · 新开</small></span></a>' +
+      '<a href="/ai-rank" data-track><span class="ic">🛰</span><span><b>AI 巡逻榜</b><small>全网风评 · 机器中立判决</small></span></a>' +
       '<a href="/rank?tier=la" data-track><span class="ic">💀</span><span><b>避雷区</b><small>谁去谁哭</small></span></a>' +
       '<a href="/shops" data-track><span class="ic">🗺</span><span><b>店铺档案</b><small>按城市逛</small></span></a>' +
       '<a href="/taste" data-track><span class="ic">🌶</span><span><b>口味筛选</b><small>想吃哪一口</small></span></a></div>';
@@ -287,6 +288,7 @@ window.PAGES = (function () {
     if (site.xhs_url) links.push('<a href="' + esc(site.xhs_url) + '" target="_blank" rel="noopener">小红书</a>');
     links.push('<a href="/about" data-track>评级标准</a>');
     links.push('<a href="/rank" data-track>排行榜</a>');
+    links.push('<a href="/ai-rank" data-track>AI 巡逻榜</a>');
     links.push('<a href="/shops" data-track>店铺档案</a>');
     links.push('<a href="/taste" data-track>口味筛选</a>');
     const beian = site.icp
@@ -577,10 +579,67 @@ window.PAGES = (function () {
     return { title: '搜「' + kw + '」', sub: num(rev.total) + ' 条点评 · ' + num(shp.total) + ' 家店', tab: 'tandian', body: body, after: bindSearch };
   }
 
+  /* ============ AI 巡逻榜（客观榜）============ */
+  const LEVELS = [['', '全部'], ['solid', '靠谱'], ['foggy', '有水分'], ['bust', '不建议'], ['unknown', '没底细']];
+
+  function airankRow(a, opts) {
+    const conf = Math.round(num(a.confidence) * 100);
+    const meta = [a.district, a.cuisine, a.avg_price > 0 ? '人均¥' + a.avg_price : '']
+      .filter(Boolean).map(esc).join(' · ');
+    let sig = '';
+    if ((a.signals || []).length) {
+      sig = '<div class="aisig">' + a.signals.map((s) =>
+        '<span class="aisg ' + (s.good > 0 ? 'up' : s.good < 0 ? 'dn' : '') + '">' +
+        esc(s.k) + '：' + esc(s.v) + '</span>').join('') + '</div>';
+    }
+    let plats = '';
+    if ((a.platforms || []).length) {
+      plats = '<details class="aiplat"><summary>各平台风评盘查</summary>' +
+        a.platforms.map((p) => '<div class="aip ' + (p.good > 0 ? 'up' : p.good < 0 ? 'dn' : '') + '">' +
+        '<b>' + esc(p.k) + '</b>' + esc(p.v) + '</div>').join('') + '</details>';
+    }
+    return '<div class="airk" data-id="' + a.id + '">' +
+      '<div class="airk-head">' +
+      '<div class="no">' + (a.rank_no || '·') + '</div>' +
+      '<div class="airk-tit"><div class="dn nowrap">' + esc(a.shop_name) + '</div>' +
+      (meta ? '<div class="shp">' + meta + '</div>' : '') + '</div>' +
+      '<div class="airk-score"><span class="aijs">' + num(a.score).toFixed(1) + '</span>' +
+      '<span class="ailv lv-' + esc(a.level) + '">' + esc(a.level_label) + '</span></div></div>' +
+      (a.judge ? '<div class="aijd">“' + esc(a.judge) + '”</div>' : '') +
+      (a.summary ? '<div class="aisummary">' + esc(a.summary) + '</div>' : '') +
+      sig + plats +
+      (a.advice ? '<div class="aiadv">📍 ' + esc(a.advice) + '</div>' : '') +
+      '<div class="aifoot">把握度 ' + conf + '%' +
+      ((a.sources || []).length ? ' · 采信源：' + a.sources.map(esc).join('、') : '') +
+      ' · ' + (L.fmtDate(a.last_patrol_at) || '待巡逻') + '</div>' +
+      '</div>';
+  }
+
+  async function airank(q) {
+    const base = { level: q.level || '', q: q.q || '', sort: q.sort || 'rank', page: q.page || 1 };
+    const d = await L.api.get('/api/ai-rank', { level: base.level, q: base.q, sort: base.sort, page: num(base.page) || 1, size: 20 });
+    const seg = '<div class="seg">' +
+      [['rank', '综合榜', link('/ai-rank', { level: base.level })],
+       ['score', '只看高分', link('/ai-rank', { sort: 'score', level: base.level })]]
+        .map((x) => '<a class="' + ((q.sort || 'rank') === x[0] ? 'on' : '') + '" href="' + esc(x[2]) + '" data-track>' + x[1] + '</a>').join('') + '</div>';
+    const chips = LEVELS.map((lv) => '<a class="' + (String(q.level || '') === lv[0] ? 'on' : '') + '" href="' +
+      esc(link('/ai-rank', Object.assign({}, base, { level: lv[0], page: 1 }))) + '" data-track>' + lv[1] + '</a>').join('');
+    const note = '<div class="aiwarn">⚠️ ' + esc(d.disclaimer) + '</div>';
+    let body = note + seg + '<div class="flt" style="padding-top:0">' + chips + '</div>' +
+      '<div class="searchbar"><input id="q" type="search" placeholder="找店名 / 区域 / 关键词" value="' + esc(q.q || '') + '">' +
+      '<button id="qgo" type="button">搜</button></div>';
+    body += (d.items || []).length
+      ? '<div class="ailist">' + d.items.map((a) => airankRow(a)).join('') + '</div>'
+      : L.empty('AI 还没巡逻出结果', '后台拨一下巡逻开关，让机器去网上盘风评');
+    if (d.has_more) body += '<a class="loadmore" href="' + esc(link('/ai-rank', Object.assign({}, base, { page: num(base.page) + 1 }))) + '" data-track>AI 还在扒… 看下一页</a>';
+    const updated = d.updated_at ? ' · 上次巡逻 ' + L.fmtDate(d.updated_at) : '';
+    return { title: 'AI 巡逻榜 · 客观风评', sub: 'TOP ' + num(d.total) + updated, tab: 'tandian', body: body, after: bindSearch };
+  }
+
   /* ============ 404 ============ */
   async function notfound() {
     return { title: '这条不存在', sub: '404', body: L.empty('走错门了', '点底部「首页」重新找') };
   }
 
-  return { home, tandian, yushanfang, rank, shops, shop, review, taste, about, search, notfound, foot, sect, link, shopCard };
+  return { home, tandian, yushanfang, rank, shops, shop, review, taste, about, search, airank, notfound, foot, sect, link, shopCard };
 })();

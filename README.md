@@ -7,7 +7,7 @@ Go 服务端、AI 内容流水线 worker（短视频 + 四平台文案）。
 
 | 目录 | 说明 |
 | --- | --- |
-| `src/server/` | Go 服务端（sqlite、`/api/admin/*`、`/api/pipeline/*`、`/api/mp/*`），详见各 internal 包 |
+| `src/server/` | Go 服务端（sqlite、`/api/admin/*`、`/api/pipeline/*`、`/api/mp/*`），v14 起含 **AI 巡逻引擎**（定时联网盘风评→`ai_rank` 客观榜，见 deploy/README），详见各 internal 包 |
 | `web/` | 前台 SPA（`web/index.html`）+ **管理干活台**（`web/latiaomei/`，路由 `#/projects #/release #/tasks #/cmd`） |
 | `miniapps/user-wechat/` | 用户端小程序 |
 | `miniapps/admin-wechat/` | 管理端小程序（指挥中心、项目工作区、待放行） |

@@ -123,9 +123,15 @@ func runServe(cfg *config.Config, st *store.Store) error {
 	})
 	col.Run()
 
+	api := httpapi.New(cfg, st, col)
+	// v14 AI 巡逻：后台定时盘全网风评→ai_rank 客观榜。巡逻 ctx 随服务退出取消。
+	patrolCtx, patrolStop := context.WithCancel(context.Background())
+	defer patrolStop()
+	api.StartPatrolLoop(patrolCtx)
+
 	srv := &http.Server{
 		Addr:              cfg.Addr,
-		Handler:           httpapi.New(cfg, st, col).Handler(),
+		Handler:           api.Handler(),
 		ReadHeaderTimeout: 10 * time.Second,
 		ReadTimeout:       cfg.ReadTO,
 		WriteTimeout:      cfg.WriteTO,

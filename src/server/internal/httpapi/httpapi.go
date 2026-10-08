@@ -31,6 +31,7 @@ type Server struct {
 	pruneCfg    store.PruneConfig
 	uploadCache *sizeCache
 	words       *agentWordsLoader
+	patrolRun   *patrolRunState // v14 AI 巡逻互斥状态（定时器与手动触发共用）
 }
 
 // New 构造 Server。
@@ -42,6 +43,7 @@ func New(cfg *config.Config, st *store.Store, col *stats.Collector) *Server {
 		sessionTTL:  14 * 24 * time.Hour,
 		uploadCache: &sizeCache{ttl: 5 * time.Minute},
 		words:       newAgentWordsLoader(cfg.WordsFile),
+		patrolRun:   &patrolRunState{},
 		pruneCfg: store.PruneConfig{
 			PathDays: 400, HourDays: 45, RefDays: 200, TopDays: 200,
 			PathTopN: 100, RefTopN: 50, TopTopN: 50,
@@ -63,6 +65,9 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("GET /api/reviews/{slug}", s.hGetReview)
 	mux.HandleFunc("GET /api/shops", s.hListShops)
 	mux.HandleFunc("GET /api/shops/{slug}", s.hGetShop)
+	// v14 AI 巡逻榜：纯 AI 风评判决的独立客观榜（前端带 ai_only 免责标）。
+	mux.HandleFunc("GET /api/ai-rank", s.hListAIRank)
+	mux.HandleFunc("GET /api/ai-rank/{id}", s.hGetAIRank)
 	mux.HandleFunc("GET /api/taxonomy", s.hTaxonomy)
 	mux.HandleFunc("POST /api/track", s.hTrack)
 	mux.HandleFunc("GET /api/healthz", s.hHealth)
@@ -179,6 +184,14 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("POST /api/admin/projects/{id}/steps", s.auth(s.csrf(s.hAdminProjectStep)))
 	mux.HandleFunc("POST /api/admin/project-steps/{id}/save", s.auth(s.csrf(s.hAdminProjectStepSave)))
 	mux.HandleFunc("POST /api/admin/project-steps/{id}/retry", s.auth(s.csrf(s.hAdminProjectStepRetry)))
+
+	// ---- v14 AI 巡逻榜（定时互联网巡逻 → AI 客观榜 → 可晋升探店榜走人审）----
+	mux.HandleFunc("GET /api/admin/patrol", s.auth(s.hAdminPatrolStatus))
+	mux.HandleFunc("POST /api/admin/patrol/run", s.auth(s.csrf(s.hAdminPatrolRun)))
+	mux.HandleFunc("GET /api/admin/patrol/ai-rank", s.auth(s.hAdminListAIRank))
+	mux.HandleFunc("POST /api/admin/patrol/ai-rank/{id}/status", s.auth(s.csrf(s.hAdminAIRankStatus)))
+	mux.HandleFunc("POST /api/admin/patrol/ai-rank/{id}/promote", s.auth(s.csrf(s.hAdminAIRankPromote)))
+	mux.HandleFunc("DELETE /api/admin/patrol/ai-rank/{id}", s.auth(s.csrf(s.hAdminAIRankDelete)))
 
 	// ---- 静态资源与 SPA ----
 	mux.Handle("GET /uploads/", http.StripPrefix("/uploads/", s.uploadsServer()))

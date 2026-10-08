@@ -620,3 +620,28 @@ video.pre{width:100%;max-width:360px;border-radius:12px;border:2.5px solid var(-
 .sumchips span{font-size:11px;font-weight:900;border:2px solid var(--line);border-radius:9px;padding:3px 9px;background:#fff}
 .mswrap{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:7px}
 .mswrap label{display:flex;gap:7px;align-items:center;font-size:12px;font-weight:800;color:#333;border:2px solid var(--line);border-radius:10px;padding:7px 10px;background:#fff;letter-spacing:0}
+
+/* ============ v14 AI 巡逻榜（客观榜） ============ */
+.ailist{display:flex;flex-direction:column;gap:11px;padding:4px 0}
+.airk{background:var(--card);border:var(--hair) solid var(--line);border-radius:16px;padding:11px 12px;box-shadow:5px 5px 0 rgba(0,0,0,.13)}
+.airk-head{display:grid;grid-template-columns:34px 1fr auto;gap:9px;align-items:center}
+.airk-head .no{width:34px;height:34px;background:#111;color:var(--acid);font-weight:900;font-size:15px;display:grid;place-items:center;transform:rotate(-4deg);border-radius:8px}
+.airk-tit .dn{font-size:16px;font-weight:900;letter-spacing:-.3px}
+.airk-tit .shp{font-size:11px;font-weight:700;color:#7a7971;margin-top:2px}
+.airk-score{text-align:right;line-height:1.1}
+.aijs{display:block;font-size:24px;font-weight:900;color:var(--latiao);letter-spacing:-1px}
+.ailv{display:inline-block;font-size:10px;font-weight:900;padding:2px 8px;border-radius:8px;border:2px solid var(--line);color:#111}
+.lv-solid{background:#8FE9FF}.lv-foggy{background:#FFB8D4}.lv-bust{background:#141414;color:#fff}.lv-unknown{background:#e6e2d6}
+.aijd{margin-top:8px;font-size:14px;font-weight:900;color:var(--ink)}
+.aisummary{margin-top:5px;font-size:12px;line-height:1.5;color:#4a463d}
+.aisig{display:flex;flex-wrap:wrap;gap:6px;margin-top:9px}
+.aisg{font-size:11px;font-weight:800;border:2px solid var(--line);border-radius:9px;padding:3px 8px;background:#faf6ec;line-height:1.3}
+.aisg.up{background:#e7f6d8}.aisg.dn{background:#fbe0dc}
+.aiplat{margin-top:8px;border:2px dashed var(--line);border-radius:11px;padding:6px 9px;background:#fffdf7}
+.aiplat summary{font-size:12px;font-weight:900;cursor:pointer;color:var(--muted)}
+.aiplat .aip{font-size:11px;margin-top:5px;padding:3px 6px;border-radius:7px;background:#f2eee1;line-height:1.4}
+.aiplat .aip b{margin-right:6px;font-weight:900}
+.aiplat .aip.up b{color:#2f7d32}.aiplat .aip.dn b{color:var(--red)}
+.aiadv{margin-top:9px;font-size:12px;font-weight:800;color:#2c5f2d;background:#e7f6d8;border-radius:9px;padding:6px 9px}
+.aifoot{margin-top:9px;font-size:10px;color:#9a9990;font-weight:700;display:flex;flex-wrap:wrap;gap:6px}
+.aiwarn{background:#fff3cd;border:var(--hair) solid var(--line);border-radius:12px;padding:9px 11px;font-size:12px;line-height:1.5;font-weight:700;color:#5a4a12;margin:4px 0 10px}

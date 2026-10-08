@@ -36,7 +36,9 @@ var schemaSQL string
 // v13 项目制生产：projects / project_assets / project_steps 三表 + tasks.project_id 列。
 // 建视频/文案从“一枪入队跑到底”改为“一个项目、多轮交互”：工作区加图、改提示词、
 // 分步跑（出分镜→改分镜→出成片→出文案），每步一条 step 留痕。
-const schemaVersion = 13
+// v14 AI 巡逻榜：ai_rank 表（定时互联网巡逻的 AI 风评判决，独立客观榜）。
+// 全是 CREATE IF NOT EXISTS，整体执行即可。
+const schemaVersion = 14
 
 // v13Upgrade 幂等：任务表挂上项目 id（新库 schema.sql 无此列，老库重复 ALTER 容错）。
 var v13Upgrade = []string{

@@ -378,6 +378,44 @@ CREATE TABLE IF NOT EXISTS project_steps (
 );
 CREATE INDEX IF NOT EXISTS idx_pstep_project ON project_steps(project_id, id);
 
+-- ---------- v14: AI 巡逻榜 · ai_rank ----------
+-- 定时互联网巡逻的产物：AI 中立第三方对一家店的风评判决，独立成榜。
+-- 与探店榜（reviews）分开，不污染她本人实探记录；promote 才落 reviews 走人审。
+-- 纯 AI、未经复核：前端与导出都带 ai_only 标识（见 store.AIRank 说明）。
+CREATE TABLE IF NOT EXISTS ai_rank (
+  id             INTEGER PRIMARY KEY AUTOINCREMENT,
+  shop_name      TEXT NOT NULL,
+  city           TEXT NOT NULL DEFAULT '杭州',
+  district       TEXT NOT NULL DEFAULT '',
+  address        TEXT NOT NULL DEFAULT '',
+  cuisine        TEXT NOT NULL DEFAULT '',
+  avg_price      INTEGER NOT NULL DEFAULT 0,
+  level          TEXT NOT NULL DEFAULT 'unknown',  -- solid靠谱/foggy有水分/bust不建议/unknown没底细
+  score          REAL NOT NULL DEFAULT 0,          -- 0-10 综合风评分
+  tier           TEXT NOT NULL DEFAULT 'npc',      -- 五档映射（复用探店榜展示口径）
+  judge          TEXT NOT NULL DEFAULT '',         -- ≤20字一句话终审
+  advice         TEXT NOT NULL DEFAULT '',         -- 怎么点防翻车/勝退建议
+  summary        TEXT NOT NULL DEFAULT '',         -- 风评综述（80-150 字）
+  signals        TEXT NOT NULL DEFAULT '[]',       -- JSON [{k,v,good}] 信号（评论分布/刷单/差评）
+  platforms      TEXT NOT NULL DEFAULT '[]',       -- JSON [{name,v,good}] 各平台风评
+  dishes         TEXT NOT NULL DEFAULT '[]',       -- JSON ["菜名",...]
+  amap_note      TEXT NOT NULL DEFAULT '',         -- 高德到店证据行（缓存原文压平）
+  evidence       TEXT NOT NULL DEFAULT '',         -- 本次巡逻依赖的证据快照（文本）
+  sources        TEXT NOT NULL DEFAULT '[]',       -- JSON ["高德","小红书"...] 本次采信了哪些源
+  confidence     REAL NOT NULL DEFAULT 0,          -- 0-1 模型自报把握度（供榜单位次与过滤）
+  status         TEXT NOT NULL DEFAULT 'active',   -- active/retired（retired=下架不进榜）
+  rank_no        INTEGER NOT NULL DEFAULT 0,       -- 榜单名次（patrol 后按 score×confidence 重排）
+  view_count     INTEGER NOT NULL DEFAULT 0,
+  patrol_batch   TEXT NOT NULL DEFAULT '',          -- 巡逻批次标识（日期）
+  promoted_review_id INTEGER NOT NULL DEFAULT 0,    -- 晋升后生成的探店草稿 id（非0=已进探店榜，幂等防重）
+  last_patrol_at INTEGER NOT NULL DEFAULT 0,
+  created_at     INTEGER NOT NULL DEFAULT 0,
+  updated_at     INTEGER NOT NULL DEFAULT 0,
+  UNIQUE(city, shop_name)
+);
+CREATE INDEX IF NOT EXISTS idx_airank_status ON ai_rank(status, score DESC);
+CREATE INDEX IF NOT EXISTS idx_airank_patrol ON ai_rank(last_patrol_at);
+
 -- ---------- v11: 鉴店 skill · 高德到店数据缓存 ----------
 
 -- 辣条妹鉴店要参考高德 POI（评分/人均/扫街榜痕迹）。高德配额免费但有限，

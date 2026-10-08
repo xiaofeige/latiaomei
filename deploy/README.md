@@ -59,6 +59,23 @@ tail -f /var/log/latiaomei/latiaomei.log              # 看日志
 ./build/latiaomei passwd -u latiaomei -p '新密码'      # 改后台密码（改完重启）
 ```
 
+## v14 AI 巡逻榜（定时互联网巡逻 → 客观榜）
+
+服务端后台协程每 10 分钟醒一次，到点（间隔看 `patrol_interval_hours`）自动跑一轮巡逻：
+高德关键词发现候选店 → 逐店开 `enable_search` 让通义盘全网风评（锦点：高德评分/扫街榜
+=真实到店信号）→ AI 出 JSON 判决落 `ai_rank` 表 → 按 分×把握度 重建名次。
+
+- **铁律不破**：AI 判决只进独立的「AI 客观榜」（前台 `/ai-rank`，带免责标），绝不混探店榜；
+  要进探店榜必须后台点「晋升」落 reviews **草稿**，辣条妹本人去吃、审核发布后才外显。
+- 参数全在 settings（管理台「AI巡逻榜」页可改，改完即生效不用重启）：`patrol_enabled`
+  开关 / `patrol_interval_hours` 间隔 / `patrol_batch_size` 每轮几家 / `patrol_repoll_days`
+  重判冷却 / `patrol_keywords` 发现词 / `patrol_max_entries` 榜容量（满了转重判旧店）。
+- 依赖：`LATIAOMEI_LLM_API_KEY`（必配，没它不巡）+ `LATIAOMEI_AMAP_KEY`（候选发现；
+  没它只能后台点名鉴店）。联网检索另受 `LATIAOMEI_LLM_SEARCH` 控制。
+- 防幻觉：解析时钳位分数/把握度；known=false 强制降 unknown；信号不足两条的「有把握
+  判决」降级；模型回的名与巡逻目标不符时店以目标为准、judge 留〔AI回名〕痕。
+- 手动：管理台「AI巡逻榜」→ 立即整轮（异步）/ 点名鉴店（同步等判决，≤12 家）。
+
 ## v11 吃货 AI Agent（辣条妹大脑）
 
 - 用户端小程序首页的 AI 对话走 `POST /api/mp/agent/chat`，靠 `latiaomei.env` 里的

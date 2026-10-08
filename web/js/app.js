@@ -23,6 +23,7 @@
     [/^\/tandian$/, 'tandian'],
     [/^\/yushanfang$/, 'yushanfang'],
     [/^\/rank$/, 'rank'],
+    [/^\/ai-rank$/, 'airank'],
     [/^\/shops$/, 'shops'],
     [/^\/shop\/([^\/]+)$/, 'shop', true],
     [/^\/review\/([^\/]+)$/, 'review', true],
@@ -86,7 +87,7 @@
 
     // Tab 高亮：店铺页归店铺；榜单/口味/搜索/探店归探店；菜谱归御膳房；详情等页面自己的 tab 说了算（下方 paintTabs(page.tab)）。
     const pre = (r.name === 'shop' || r.name === 'shops') ? 'shops'
-      : (r.name === 'rank' || r.name === 'taste' || r.name === 'search' || r.name === 'tandian') ? 'tandian'
+      : (r.name === 'rank' || r.name === 'airank' || r.name === 'taste' || r.name === 'search' || r.name === 'tandian') ? 'tandian'
       : r.name;
     paintTabs(pre);
     view.innerHTML = '<div class="loadmore"><span class="spin"></span>条总还在吃…</div>';
