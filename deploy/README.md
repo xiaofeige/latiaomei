@@ -131,3 +131,25 @@ systemd-run --wait --pty -p MemoryMax=800M -p GOMEMLIMIT=700MiB \
 - 内容：后台「维护」页 → 导出内容 JSON
 - 整库：停服务后拷 `data/latiaomei.db`（连同 `-wal`）与 `data/uploads/`
 - `data/.secret` 丢了会让所有登录会话失效，建议一起备份
+
+## v15 辣条妹日报 + 站点改版（v16 视觉）
+
+- **辣条妹日报（内容日更引擎）**：`src/server/internal/httpapi/daily.go`。
+  服务端后台协程每 20 分钟醒一次，当天没有日报就自动生成一篇挂上首页横条与 `/daily` 页：
+  今日主角从探店榜按日期轮值、配今日灶台、AI 巡逻榜首风评、许愿池呼声；LLM 只改写口吻，
+  素材全部来自站内已放行内容，命中禁词表自动落回模板，**LLM 挂了日报也不断更**。
+  - settings 开关：`daily_brief_enabled=0` 整体关停；`daily_brief_llm=0` 只用模板不走 LLM。
+  - 管理台「辣条妹日报」页：预览 / 手改（保存后 source=manual，当天引擎不再覆盖）/ 重新生成。
+  - 接口：`GET /api/daily`（今日+往期）、`POST /api/admin/daily(/run)`；`/api/bootstrap` 带 `daily`。
+- **AI 巡逻日更**：生产 settings 已置 `patrol_enabled=1`、`patrol_interval_hours=24`，
+  客观榜天天有动静，日报才会引用到「今日风评」。
+- **站点地图**：`GET /sitemap.xml` 服务端每天现算（首页/日报/榜单 + 最新 100 条点评 + 100 家店），
+  robots.txt 已加 Sitemap 行；配合日报的 changefreq=daily 拉搜索引擎回访抓取。
+- **平台数据口径（重要）**：小红书/抖音/知乎/大众点评/美团 均有反爬与用户协议限制，
+  **本站不做未授权抓取**（法律与封禁风险都不小）。合规的风评来源是巡逻引擎的
+  「LLM 联网检索公开风评」（enable_search 通道，由通义服务端检索，不绕任何平台登录态/签名）；
+  店端基础数据走高德开放平台官方接口。要接点评/美团官方数据，需签约其开放平台后用
+  `/api/pipeline/*` 同款 worker 模式入库，接口位已留好。
+- **v16 视觉改版**：`web/css/main.css` 全站换「市井暖灯」色盘（辣椒红/杏黄/茶青/湖青 + 米宣纸底，
+  衬线判决字），底部 Tab 悬浮胶囊、卡片暖褐细描边漫射影；辣条妹 IP（hero SVG/头像/印章）原样保留。
+  前端资源版本号统一 `?v=1.6.0`（改样式记得同步 bump）。

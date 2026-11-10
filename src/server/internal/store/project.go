@@ -16,6 +16,25 @@ import (
 // 铁律不变：step 产物只进 social_items 等人工放行，机器没有自发通道。
 // ============================================================
 
+// ProjectSummary 按状态统计项目数（ops 只读接口用，见 httpapi/ops.go）。
+func (s *Store) ProjectSummary() (map[string]int64, error) {
+	rows, err := s.db.Query("SELECT status, COUNT(1) FROM projects GROUP BY status")
+	if err != nil {
+		return nil, fmt.Errorf("store: 查项目统计: %w", err)
+	}
+	defer rows.Close()
+	out := map[string]int64{"open": 0, "review": 0, "done": 0, "archived": 0}
+	for rows.Next() {
+		var k string
+		var v int64
+		if err := rows.Scan(&k, &v); err != nil {
+			return nil, err
+		}
+		out[k] = v
+	}
+	return out, rows.Err()
+}
+
 // 项目状态：open=进行中 review=等放行 done=已交付 archived=归档
 func ValidProjectStatus(st string) bool {
 	switch st {

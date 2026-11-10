@@ -1,5 +1,9 @@
 # 辣条妹内容流水线 worker（tools/pipeline）
 
+> **视频基调风格（已定稿，后续出片一律照此）**：《辣妹快报》新闻联播式——辣条妹 AI 形象替新闻主播出镜，
+> 右上角常驻「本期美食」窗口从多角度介绍本期推荐。详见 [STYLE.md](STYLE.md)（分镜提示词、渲染版式、
+> `VIDEO_STYLE` 开关均以其为准）。
+
 AI 驱动的分发流水线：**辣条妹只出现在两处——下指令、审内容**，其余由本 worker 自动完成。
 后端任务队列在 Go 服务里（`/api/pipeline/*`，见 `src/server/internal/httpapi/pipeline.go`），
 本目录只是消费端。干活入口有两个，状态同源（都在 sqlite），随时接力：
@@ -21,7 +25,7 @@ AI 驱动的分发流水线：**辣条妹只出现在两处——下指令、审
           │                        在工作区反复加图、改提示词、手改分镜后多轮重跑；
           │                        人物镜头交给 happyhorse（拿辣条妹三视图/特写做参考）生成动态片段，
           │                        其余镜头 hyperframes 图卡；产物挂 social_items 等放行
-          ├─ jobs/video.js        点评 → LLM 分镜+旁白(9-11 镜/≈50s) → 首镜挂真实封面、其余镜按素材/联网图剪进画面 → hyperframes 渲染 → edge-tts 逐镜配音 + CC-BY BGM 混音 → /uploads/videos/*.mp4 + 抖音文案
+          ├─ jobs/video.js        点评 → LLM 分镜+旁白（镜数/时长随内容）→ 首镜挂真实封面、其余镜按素材/联网图剪进画面 → hyperframes 渲染 → edge-tts 逐镜配音 + CC-BY BGM 混音 → /uploads/videos/*.mp4 + 抖音文案
           ├─ jobs/gzh.js          点评 → 公众号图文 →（有凭证进草稿箱 / 无凭证落盘 /uploads/gzh/*.json）
           ├─ jobs/wxpush.js       点评 → 小程序订阅消息群发 → 配额核销
           ├─ jobs/social_gen.js   任务 → AI 产抖音/小红书/知乎/微博平台化文案 → social_items 待审（不发布！）
@@ -65,6 +69,31 @@ openmontage 引擎的每镜首帧：优先本镜指派的项目实拍图（公�
 不可用）自动退回 hyperframes，不卡单。产物命名 `proj-<pid>-s<step>-<ts>-om.mp4`，
 step result 带 `engine:"openmontage"` 供小程序展示引擎标签。
 
+### 手动出片与成片体检（bin/make-video.js + smoke/audit_film.js）
+
+视频生产不吃 worker 自动队列（2026-10-05 定稿）：在 `tools/pipeline` 下手动跑，复用同一套
+`jobs/project_step.js` 代码，只是入口换成 CLI：
+
+```bash
+node bin/make-video.js --project 3                       # 出新分镜→渲染成片→**自动挂抖音待审稿**（后台可见）
+node bin/make-video.js --project 3 --no-submit          # 只落盘不挂稿（本地试渲染，后台看不到）
+node bin/make-video.js --project 3 --storyboard <快照>  # 用本地分镜文件（可手改后再出）
+node bin/make-video.js --project 3 --attach <已有成片.mp4>  # 不出片，只把盘上已有的片补登记进「待放行」
+# 常用开关：--prompt --hh 0|1 --secs --style news|plain --renderer --label 6 --copy --platform --note
+
+node smoke/audit_film.js ../../data/uploads/videos/proj-3-6-<ts>.mp4   # 验尸：时长/唇形/台词越界
+```
+
+> **后台看不到片子？** 2026-10-06 吃过这个亏：旧版 CLI 缺省 `submit=false`（只落盘不挂稿），
+> 手动跑又不建 `project_steps`，于是「待放行」与「视频工坊」两处都查不到——代码没问题、产物没登记。
+> 现在缺省就挂待审稿；已经出在盘上的历史片用 `--attach` 补登记。
+> 想在「视频工坊」工作区看到步骤留痕，就得从控制台/小程序点「② 出成片」跑队列任务（worker 回填 step）
+> ——worker token 没有建 step 的权限，这是 v9 人审铁律。
+
+出片时自动落两份对账材料（审计不依赖已删的临时目录）：
+- `uploads/videos/<成片名>-timeline.json`：每镜 [起始, 时长, 配音长, 是否 hh, 配音是否取片段自带音轨]；
+- `uploads/hhcache/<成片名>/hh<镜号>.mp4`：口播镜源片段（只留最近 5 条，`HH_CACHE=0` 关）。
+
 ### happyhorse（token-plan 视频生成）接入
 
 - 主角定妆图已入库：`data/uploads/charref/latiaomei-three-view.jpg`（三视图）与
@@ -88,6 +117,48 @@ step result 带 `engine:"openmontage"` 供小程序展示引擎标签。
 - 开关：服务端 settings `pipeline_happyhorse`（1/0，热生效）+ worker `.env` 的 `HH_VIDEO_MODEL/HH_API_BASE`；
   验通路：`node smoke/happyhorse.js`（探测）/ `node smoke/happyhorse.js "镜头描述" --img https://…`（真跑一条，烧配额）。
 
+## 冒烟记录（2026-10-06 第二轮 · 黑屏 / 走景 / 渲染挂了）
+
+辣条妹反馈“开头台词和唇形对不上、念完变黑屏”，抽帧查成片后定位三件事：
+
+1. **黑屏 = happyhorse 回了废片**：`proj-3-ss6-…mp4` 第 3 镜 4.12s 全黑（亮度 0/255），旧版不体检直接剪进成片。
+   现在 `inspectClip` 抽帧算亮度/帧间差/首尾漂移，全黑、全白、静止、走景（首尾差>45）一律判废重试，
+   再不行退回静帧图卡；`smoke/audit_film.js` 加了全片黑屏扫描（能复现抓到 16.0-20.0s 那段）。
+2. **“开头口型不对” = 首帧选错**：拿灰底全身立绘做首帧，模型每条都在 4 秒内“走景”推到特写并换背景
+   （旧片段首尾差实测 49~85），第一秒嘴还是闭着笑的。改用「说话态」半身定妆图
+   `charref/latiaomei-host-916.jpg`（从已生成片段里挑的一帧）后景别稳定；重出 7 镜成片 28.7s。
+3. **渲染挂了不是代码问题**：`/tmp`（838M tmpfs）被一个历史遗留的 759M 仓库塞满，hyperframes 直接拒绝渲染，
+   但只吐一句含糊的 `render_cancelled_parent_exited`。现在 `render()` 渲染前体检 `/tmp` 与 `RENDER_TMP`
+   剩余空间，先自动清自家抽帧缓存/过期配音，仍不足就抛人话错误。另外 7 段视频同时解码也会打爆 Chrome，
+   已改成拼一条连续主播轨道、成片只放一个 `<video>`。
+
+**口型能力边界（实测，别再误判成流水线 bug）**：`happyhorse-1.1-i2v` 只是把 `audio_url` 当配音塞进回片，
+嘴部运动与语音包络相关度实测 -0.15~0.12 —— 没有音素级口型驱动；本 token 网关上 `videoretalk`/`emo-v1`/
+`wan2.2-s2v` 全部 `Model not exist`，公共百炼端点这把 key 也不认（401 InvalidApiKey）。流水线已做到
+“听到的就是画面那条音轨（lag=0ms、同源度≈0.99）+ 半身景别 + 字幕同步”，要真同步得换能驱动口型的模型。
+
+## 冒烟记录（2026-10-06 · 修“固定 50s + 唇形对不上”）
+
+实盘两个病同根：成片时长被算死、口播镜配音与画面不同源。旧片体检（`node tools/pipeline/smoke/audit_film.js`）：
+`proj-3-s0-202610060639.mp4` — 时长恰好 50.00s、最后一句 42.49s 说完、**尾部干瞪 7.50s**。
+
+修复后真跑两轮（项目#3，HH_MAX_SHOTS=2）：
+
+```
+node tools/pipeline/bin/make-video.js --project 3 --prompt "本期头条：御膳房干萝卜炒牛肚"
+node tools/pipeline/smoke/audit_film.js data/uploads/videos/proj-3-ss6-202610060845.mp4
+```
+
+- 分镜 LLM 按新提示只写了 **5 镜**（不再凑 9-11 镜）；开场镜配音 10.16s → 请求 happyhorse 11s→
+  拿到 11.16s 片段，镜头槽位正好 11.16s；成片 **26.52s**（内容定长，跟 50s 没关系）；
+  成片已登记为待审稿 item #23（`--attach`），后台「待放行」可直接播放；
+- 唇形对账：第 1 镜 lag=0ms 同源度 0.998；第 3 镜 lag=0ms 同源度 1.000（旧逻辑铺 edge-tts 原 mp3
+  时量到错位 **1120ms**，就是“唇形对不上台词”）；
+- 尾部静默 1.34s（=VO_TAIL 留白，不再是 7.5s 硬撑）；台词跨切镜点 0 处；
+- hyperframes 渲染日志不再报 `sparse keyframes`（happyhorse 片段出片前统一重编码 30fps/密关键帧）；
+- 离线回归闸门：`node tools/pipeline/smoke/timeline_lipsync.js`（15 项，吃 edge-tts + 一次真渲染，
+  `--quick` 只跑时间轴断言；`SMOKE_KEEP=1` 复用上轮渲染产物）。
+
 ## 安装与运行
 
 ```bash
@@ -110,8 +181,9 @@ johnvansickle 官方站在本机只有 ~20KB/s）。
 pip3 install edge-tts            # 已装 /usr/bin/edge-tts；音色 TTS_VOICE（默认 zh-CN-XiaoyiNeural）
 ```
 
-BGM 用 `vendor/bgm/` 下的 CC-BY 曲目（Kevin MacLeod / Incompetech，已下载 4 首，
-署名要求见 `vendor/bgm/ATTRIBUTION.txt`）；旁白/配乐任一步失败自动退回无声版，不卡流水线。
+BGM（**默认已关**，2026-10-05 定稿：成片不要背景音乐，人声清楚、画面优先）：需要时在 .env 加
+`BGM_ENABLED=1` 才启用 `vendor/bgm/` 下的 CC-BY 曲目（Kevin MacLeod / Incompetech，4 首，
+署名要求见 `vendor/bgm/ATTRIBUTION.txt`）；旁白任一步失败自动退回无声版，不卡流水线。
 
 ## 设计约定（改代码前必读）
 
@@ -126,8 +198,11 @@ BGM 用 `vendor/bgm/` 下的 CC-BY 曲目（Kevin MacLeod / Incompetech，已下
   长期方案：`.env` 换普通按量计费的百炼 key（`LLM_API_BASE=https://dashscope.aliyuncs.com/compatible-mode/v1`）。
 - **视频画面（v11）**：成片不再只是字卡。每镜 LLM 给 `search` 检索词，`lib/media.js` 走 Bing 图片/视频 async 接口
   主动搜集真实画面（无 key、国内可达），下载后做魔数/体积校验、过滤水印图库，剪成全屏背景 + Ken Burns 缓推 +
-  黑压渐变（保文字可读）；个别镜可选剪入短视频片段。搜不到才降级文字卡。目标时长 `VIDEO_TARGET_SECS`（默认 50s），
-  每镜 `SCENE_DUR`（默认 5s）。用户上传图仅按 LLM 指派挂载，不作强依赖。
+  黑压渐变（保文字可读）；个别镜可选剪入短视频片段。搜不到才降级文字卡。**成片时长跟着内容走**
+  （2026-10-06 修订）：每镜 = 该镜旁白实测朗读时长 + `VO_TAIL`（空镜用 `SCENE_DUR`，上下限
+  `SCENE_MIN`/`SCENE_MAX`），happyhorse 镜 = 片段实测时长，总长 = 各镜之和；`VIDEO_TARGET_SECS`
+  退成“软上限体检”（超出只 log warn，**绝不把余量摊到最后一镜凑时长**——旧版就是这么把每期
+  都硬撑成固定 50s 的）。用户上传图仅按 LLM 指派挂载，不作强依赖。
 - **图片先理解再插入（v12，重要）**：v11 只校验魔数/体积，LLM 从没见过图（只拿到“图片数量”），
   导致实盘出现：父女日常任务被套美食人设编成“吃片儿川/抢葱包桧”、镜头插进欧美图库女水印图。
   v12 三刀：① `lib/vision.js` 用 `LLM_VISION_MODEL`（当前端点多模态的 `qwen3.8-flash`）逐张描述用户上传图，
@@ -139,6 +214,14 @@ BGM 用 `vendor/bgm/` 下的 CC-BY 曲目（Kevin MacLeod / Incompetech，已下
 - **视频产能**：每日上限 `VIDEO_DAILY_CAP`（与服务端 settings `video_daily_cap` 同语义，worker 侧兜底），
   超了直接 skip。产物命名 `r<reviewID>-<时间戳>.mp4`，公开路径 `/uploads/videos/`。注意 50s 成片单并发渲染≈7-8 分钟，
   `render()` 超时已放宽到 18 分钟。
+- **口型对齐（2026-10-06 两条实盘病，改代码前必读）**：
+  ① 说话镜（talk=true）的成片配音**用 happyhorse 片段自带音轨**（`audio.js: useClipAudio`），不再铺
+  edge-tts 原 mp3——模型拿 audio_url 驱动口型后，回片音轨相对原 mp3 有 ~0.85s 起口偏差与中段
+  漂移，铺原 mp3 就是“唇形和台词对不上”（实测错位 1120ms）；片段没音轨才退回 edge-tts 版。
+  ② happyhorse 片段下载后统一重编码 30fps + 每秒一个关键帧（`happyhorse.js: normalizeClip`），否则
+  hyperframes 报 sparse keyframes 并出现抽帧卡帧（嘴型冻住但声音在走）。
+  ③ 镜头槽位 = 片段实测时长（`sc.hhDur`），配音 lead=0；旧版用 LLM 猜的 `dur=5s` 卡 6-7s 配音，
+  声音漫过下一镜（闭嘴立绘在讲话）。回归闸门：`node tools/pipeline/smoke/timeline_lipsync.js`。
 - **失败语义**：普通错误 failed（服务端退避 10 分钟、最多 3 次）；环境/配置不齐类 skip（不重试）。
 - **抖音发布**：成品+文案先落任务 result，人工一键搬运；开放平台企业资质下来后
   在 `jobs/video.js` 的 TODO 处接 API 直传。

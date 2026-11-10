@@ -12,8 +12,6 @@ const A = require('../lib/audio');
 const vision = require('../lib/vision');
 const { CFG } = require('../lib/env');
 
-// 成片目标时长（秒）：短视频拉到 ~50s，靠多分镜 + 每镜 5s 支撑，不再是十几秒的字卡。
-const TARGET_SECS = Number(process.env.VIDEO_TARGET_SECS || 50);
 
 function dayStartUnix() {
   const d = new Date(); d.setHours(0, 0, 0, 0);
@@ -38,7 +36,7 @@ async function runVideo(task) {
   const abs = (u) => (u && u.startsWith('/') ? site.base_url + u : u);
 
   const script = await chat([
-    { role: 'system', content: PERSONA + '\n任务：把一条点评改写成 1080x1920 竖屏短视频分镜脚本，9-11 个场景、总时长约 ' + TARGET_SECS + ' 秒（每镜 4-6 秒）。输出 JSON。' },
+    { role: 'system', content: PERSONA + '\n任务：把一条点评改写成 1080x1920 竖屏短视频分镜脚本。时长跟着内容走：镜头多长取决于该镜旁白念多久（约 4-5 字/秒），不固定镜数不凑时长（一般 6-10 镜，内容少就短）。输出 JSON。' },
     { role: 'user', content: JSON.stringify({
         点评: { dish: rv.dish, headline: rv.headline, body: rv.body, order_tip: rv.order_tip, score: rv.score, price: rv.price, tier: rv.tier },
         输出格式: {
@@ -76,9 +74,14 @@ async function runVideo(task) {
   }
   // 旁白：逐镜 edge-tts 合成（失败退静音），每镜时长自动适应旁白长度。
   const voOk = A.synthScenes(dir, scenes);
-  const { segs, total } = R.planTimeline(scenes, TARGET_SECS);
-  console.log(`[video] 素材 ${src.got}/${src.need} 镜联网命中，旁白 ${voOk}/${scenes.length} 条，成片 ${total}s`);
-  R.writeProject(dir, { scenes, segs, total, ipName, tagline: settings.site_tagline });
+  const { segs, total } = R.planTimeline(scenes, 0);
+  console.log(`[video] 素材 ${src.got}/${src.need} 镜联网命中，旁白 ${voOk}/${scenes.length} 条，成片 ${total}s（${scenes.length} 镜，内容定长）`);
+  // 风格基调同项目制通道（见 STYLE.md）：新闻联播式，主播背景用定妆立绘。
+  R.writeProject(dir, {
+    scenes, segs, total, ipName, tagline: settings.site_tagline,
+    style: CFG.videoStyle || 'news',
+    anchorPath: path.join(CFG.uploadsDir, 'charref', 'latiaomei-front-916.jpg'),
+  });
 
   const stamp = new Date().toISOString().slice(0, 16).replaceAll(/[-:T]/g, '');
   const outName = `r${rv.id}-${stamp}.mp4`;

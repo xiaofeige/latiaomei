@@ -5,6 +5,10 @@ const { CFG } = require('./env');
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
+// 大 JSON 输出（分镜 4500 token）在本机模型上可能超 120s，超时默认放宽到 5 分钟且可配；
+// 超时归为可重试（历史上出分镜就死在 “The operation was aborted due to timeout”）。
+const LLM_TIMEOUT_MS = Number(process.env.LLM_TIMEOUT_MS || 300_000);
+
 async function chatOnce(messages, { json = false, temperature = 0.8, maxTokens = 2000, model = '' } = {}) {
   const res = await fetch(CFG.llmBase.replace(/\/+$/, '') + '/chat/completions', {
     method: 'POST',
@@ -16,7 +20,7 @@ async function chatOnce(messages, { json = false, temperature = 0.8, maxTokens =
       max_tokens: maxTokens,
       ...(json ? { response_format: { type: 'json_object' } } : {}),
     }),
-    signal: AbortSignal.timeout(120_000),
+    signal: AbortSignal.timeout(LLM_TIMEOUT_MS),
   });
   const text = await res.text();
   if (!res.ok) {
@@ -40,7 +44,8 @@ async function chat(messages, opts = {}) {
       return JSON.parse(start > 0 ? cleaned.slice(start) : cleaned);
     } catch (e) {
       last = e;
-      if (!e.retryable && !(e instanceof SyntaxError)) throw e;
+      const timed = e && (e.name === 'TimeoutError' || /timeout|aborted/i.test(String(e.message)));
+      if (!e.retryable && !timed && !(e instanceof SyntaxError)) throw e;
       await sleep(2000 * (i + 1));
     }
   }

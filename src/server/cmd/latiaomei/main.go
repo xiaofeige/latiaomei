@@ -128,6 +128,8 @@ func runServe(cfg *config.Config, st *store.Store) error {
 	patrolCtx, patrolStop := context.WithCancel(context.Background())
 	defer patrolStop()
 	api.StartPatrolLoop(patrolCtx)
+	// v15 辣条妹日报：每天自动上新的内容引擎（与巡逻同 ctx，随服务退出停）。
+	api.StartDailyLoop(patrolCtx)
 
 	srv := &http.Server{
 		Addr:              cfg.Addr,

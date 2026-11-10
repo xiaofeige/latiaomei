@@ -35,6 +35,8 @@ module.exports = {
     llmModel: env('LLM_MODEL', 'qwen3.8-flash'),
     // 渲染
     tmpDir: env('RENDER_TMP', '/data/tmp/hf'),
+    // 视频基调风格（见 STYLE.md）：news=《辣妹快报》新闻联播式（默认），plain=旧图文卡
+    videoStyle: env('VIDEO_STYLE', 'news'),
     hyperframesBin: path.join(ROOT, 'node_modules/hyperframes/bin/hyperframes.mjs'),
     gsapVendor: path.join(ROOT, 'vendor/gsap.min.js'),
     // 产物落位（复用后端 /uploads/ 静态服务）
@@ -52,7 +54,7 @@ module.exports = {
       model: env('HH_VIDEO_MODEL'),
       base: env('HH_API_BASE'),
       key: env('HH_API_KEY'),
-      maxShots: envInt('HH_MAX_SHOTS', 4), // 单条成片最多交给 happyhorse 几镜（耗时/烧配额）
+      maxShots: envInt('HH_MAX_SHOTS', 6), // 单条成片最多交给 happyhorse 几镜（隔镜有人，人物镜头要占半数）
     },
   },
 };

@@ -247,6 +247,55 @@ func (s *Store) TopContent(kind, date string, n int) ([]KV, error) {
 	return out, rows.Err()
 }
 
+// ContentSeries 取近 days 天逐日「内容阅读」次数（stat_top 里 review+shop 的 PV 合计）。
+// 返回 date -> pv；ops 只读接口用（见 httpapi/ops.go）。
+func (s *Store) ContentSeries(days int) (map[string]int64, error) {
+	if days <= 0 || days > 400 {
+		days = 14
+	}
+	from := s.Now().AddDate(0, 0, -(days - 1)).Format("2006-01-02")
+	rows, err := s.db.Query(`SELECT date, SUM(pv) FROM stat_top
+		WHERE kind IN ('review','shop') AND date >= ? GROUP BY date`, from)
+	if err != nil {
+		return nil, fmt.Errorf("store: 查内容阅读: %w", err)
+	}
+	defer rows.Close()
+	out := map[string]int64{}
+	for rows.Next() {
+		var d string
+		var n int64
+		if err := rows.Scan(&d, &n); err != nil {
+			return nil, err
+		}
+		out[d] = n
+	}
+	return out, rows.Err()
+}
+
+// PublishedSeries 取近 days 天逐日「新发布点评数」（按 published_at 落在部署时区的自然日）。
+// 返回 date -> 条数；ops 只读接口用。
+func (s *Store) PublishedSeries(days int) (map[string]int64, error) {
+	if days <= 0 || days > 400 {
+		days = 14
+	}
+	from := s.Now().AddDate(0, 0, -(days - 1))
+	rows, err := s.db.Query(`SELECT published_at FROM reviews
+		WHERE status = 'published' AND published_at >= ?`, from.Unix())
+	if err != nil {
+		return nil, fmt.Errorf("store: 查新发布: %w", err)
+	}
+	defer rows.Close()
+	out := map[string]int64{}
+	for rows.Next() {
+		var ts int64
+		if err := rows.Scan(&ts); err != nil {
+			return nil, err
+		}
+		out[time.Unix(ts, 0).In(s.loc).Format("2006-01-02")]++
+	}
+	return out, rows.Err()
+}
+
 // LoadHLL 读回某天已落盘的 UV 寄存器；没有记录时返回 nil。
 func (s *Store) LoadHLL(date string) ([]byte, error) {
 	var blob []byte

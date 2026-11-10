@@ -12,13 +12,13 @@ window.LTM = (function () {
   const yen = (n) => (num(n) > 0 ? '¥' + num(n) : '面议');
   const clamp = (n, a, b) => Math.min(b, Math.max(a, n));
 
-  // 五档判定：跟后端 store.TierLabel / public.go tierMetas 保持一致。
+  // 五档判定：跟后端 store.TierLabel / public.go tierMetas / main.css :root 保持一致（v16 市井暖灯色盘）。
   const TIERS = {
-    hang: { label: '夯', name: '闭眼冲', en: 'HANG · 闭眼冲', color: '#b58f4a', bg: 'var(--acid)' },
-    dingji: { label: '顶级', name: '行业标杆', en: 'DINGJI · 值得排队', color: '#d8b877', bg: '#FFB8D4' },
-    renshang: { label: '人上人', name: '有亮点', en: 'RENSHANG · 不踩雷', color: '#8aa06b', bg: '#BDEDC8' },
-    npc: { label: 'NPC', name: '平平无奇', en: 'NPC · 路人甲', color: '#8a8478', bg: '#8FE9FF' },
-    la: { label: '拉完了', name: '彻底避雷', en: 'LA · 谁去谁哭', color: '#a0503c', bg: '#141414' },
+    hang: { label: '夯', name: '闭眼冲', en: 'HANG · 闭眼冲', color: '#A9762C', bg: '#F2B950' },
+    dingji: { label: '顶级', name: '行业标杆', en: 'DINGJI · 值得排队', color: '#BE5A45', bg: '#F7DCD1' },
+    renshang: { label: '人上人', name: '有亮点', en: 'RENSHANG · 不踩雷', color: '#5F8552', bg: '#DDE9D4' },
+    npc: { label: 'NPC', name: '平平无奇', en: 'NPC · 路人甲', color: '#8B8178', bg: '#D9E9EF' },
+    la: { label: '拉完了', name: '彻底避雷', en: 'LA · 谁去谁哭', color: '#7C4A38', bg: '#2B211C' },
   };
   const tier = (code) => TIERS[code] || TIERS.npc;
   const tierLabel = (code) => tier(code).label;

@@ -69,8 +69,15 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("GET /api/ai-rank", s.hListAIRank)
 	mux.HandleFunc("GET /api/ai-rank/{id}", s.hGetAIRank)
 	mux.HandleFunc("GET /api/taxonomy", s.hTaxonomy)
+	// v15 辣条妹日报：每天自动上新的今日判决+碎碎念（首页横条与 /daily 页消费）。
+	mux.HandleFunc("GET /api/daily", s.hDaily)
+	// 搜索引擎收录：每天现算的站点地图，配合日报日更。
+	mux.HandleFunc("GET /sitemap.xml", s.hSitemap)
 	mux.HandleFunc("POST /api/track", s.hTrack)
 	mux.HandleFunc("GET /api/healthz", s.hHealth)
+
+	// ---- ops 只读运营数据（X-Ops-Token，无限飞管理控制台小程序接入用，见 ops.go）----
+	mux.HandleFunc("GET /api/ops/stats", s.ops(s.hOpsStats))
 
 	// ---- 用户端小程序（v6：微信/抖音粉丝侧，只读内容 + 订阅记账）----
 	mux.HandleFunc("GET /api/mp/config", s.hMpConfig)
@@ -192,6 +199,10 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("POST /api/admin/patrol/ai-rank/{id}/status", s.auth(s.csrf(s.hAdminAIRankStatus)))
 	mux.HandleFunc("POST /api/admin/patrol/ai-rank/{id}/promote", s.auth(s.csrf(s.hAdminAIRankPromote)))
 	mux.HandleFunc("DELETE /api/admin/patrol/ai-rank/{id}", s.auth(s.csrf(s.hAdminAIRankDelete)))
+
+	// ---- v15 辣条妹日报：后台重生成 / 手改 ----
+	mux.HandleFunc("POST /api/admin/daily/run", s.auth(s.csrf(s.hAdminDailyRun)))
+	mux.HandleFunc("POST /api/admin/daily", s.auth(s.csrf(s.hAdminDailySave)))
 
 	// ---- 静态资源与 SPA ----
 	mux.Handle("GET /uploads/", http.StripPrefix("/uploads/", s.uploadsServer()))

@@ -15,8 +15,7 @@ const social = require('../lib/social');
 const pub = require('../lib/publishers');
 const { CFG } = require('../lib/env');
 
-// 成片目标时长（秒）。
-const TARGET_SECS = Number(process.env.VIDEO_TARGET_SECS || 50);
+// 成片时长不再固定（2026-10-06）：每镜跟着旁白朗读长度定长，总长 = 各镜之和。
 
 // 视频工坊任务不一定是美食（家人/宠物/日常都有）。v12 根因修复：以前强套
 // 辣条妹美食老饕人设 → LLM 把“父女视频通话”编成吃片儿川/抢葱包桧的食探脚本，
@@ -61,7 +60,7 @@ async function run(task) {
 
   // 2) 分镜脚本：把制片提示词 + 素材描述转成 1080x1920 竖屏分镜 + 抖音发布文案。
   const script = await chat([
-    { role: 'system', content: MISSION_PERSONA + '\n任务：产出 1080x1920 竖屏短视频分镜脚本，9-11 个场景、总时长约 ' + TARGET_SECS + ' 秒（每镜 4-6 秒）。输出 JSON。' },
+    { role: 'system', content: MISSION_PERSONA + '\n任务：产出 1080x1920 竖屏短视频分镜脚本，场景数按内容定（一般 6-10 镜，不硬凑时长：每镜长度以旁白念完为准）。输出 JSON。' },
     { role: 'user', content: JSON.stringify({
         制片提示词: prompt,
         素材: assets.length
@@ -105,7 +104,8 @@ async function run(task) {
   const src = assets.length ? { need: 0, got: 0 } : await media.sourceScenes(dir, scenes, { allowVideo: true, verify: vision.matches });
   // 旁白：逐镜 edge-tts 合成（失败退静音），每镜时长自动适应旁白长度。
   const voOk = A.synthScenes(dir, scenes);
-  const { segs, total } = R.planTimeline(scenes, TARGET_SECS);
+  // 2026-10-06：成片时长跟着旁白走，不再硬凑 TARGET_SECS（旧版每期固定 50s）。
+  const { segs, total } = R.planTimeline(scenes, 0);
   const { settings } = await api.settings();
   const ipName = settings.ip_name || '辣条妹的御膳房';
   const userImgScenes = scenes.filter((sc) => typeof sc.img === 'string' && sc.img.startsWith('a')).length;

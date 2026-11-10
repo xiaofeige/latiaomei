@@ -38,7 +38,9 @@ var schemaSQL string
 // 分步跑（出分镜→改分镜→出成片→出文案），每步一条 step 留痕。
 // v14 AI 巡逻榜：ai_rank 表（定时互联网巡逻的 AI 风评判决，独立客观榜）。
 // 全是 CREATE IF NOT EXISTS，整体执行即可。
-const schemaVersion = 14
+// v15 辣条妹日报：daily_brief 表（每天自动生成的「今日判决+碎碎念」，
+// 素材只取站内已发布内容与 ai_rank，让前台天天有新东西）。同上整体执行即可。
+const schemaVersion = 15
 
 // v13Upgrade 幂等：任务表挂上项目 id（新库 schema.sql 无此列，老库重复 ALTER 容错）。
 var v13Upgrade = []string{

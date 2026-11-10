@@ -401,6 +401,28 @@ func (s *Server) patrolTargets(ctx context.Context, need int) ([]patrolTarget, e
 			}
 		}
 	}
+	// 无高德/没发现到新店的兜底：轮值鉴站内店铺档案里的店（AI 盘的是全网公开风评，
+	// 与她本人实探的探店榜互不污染；settings patrol_fallback_own=0 可关）。
+	if len(out) < need && s.st.Setting("patrol_fallback_own") != "0" {
+		if sp, err := s.st.ListShops(city, "", "", 1, 200); err == nil && sp != nil && len(sp.Items) > 0 {
+			have := map[string]bool{}
+			for _, o := range out {
+				have[o.Name] = true
+			}
+			start := dailyIndex(s.st.Now().Format("2006-01-02")) % len(sp.Items)
+			for i := range sp.Items {
+				sh := sp.Items[(start+i)%len(sp.Items)]
+				n := strings.TrimSpace(sh.Name)
+				if n == "" || known[n] || have[n] {
+					continue
+				}
+				out = append(out, patrolTarget{Name: n})
+				if len(out) >= need {
+					break
+				}
+			}
+		}
+	}
 	// 新店不够：榜单没满就有多少算多少；满了就重判最旧的。
 	if len(out) < need {
 		cnt, _ := s.st.CountAIRank()

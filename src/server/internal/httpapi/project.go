@@ -205,10 +205,10 @@ func (s *Server) hAdminProjectStep(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var b struct {
-		Kind               string `json:"kind"`
-		Prompt             string `json:"prompt"`
-		StoryboardStepID   int64  `json:"storyboard_step_id"`
-		Renderer           string `json:"renderer"`
+		Kind             string `json:"kind"`
+		Prompt           string `json:"prompt"`
+		StoryboardStepID int64  `json:"storyboard_step_id"`
+		Renderer         string `json:"renderer"`
 	}
 	if err := decode(r, &b); err != nil {
 		s.jsonErr(w, http.StatusBadRequest, err.Error())

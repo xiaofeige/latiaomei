@@ -7,3 +7,6 @@ Disallow: /latiaomei
 Disallow: /latiaomei/
 Disallow: /api/admin/
 Disallow: /js/admin/
+
+# v15 站点地图（服务端每天现算）
+Sitemap: https://latiaomei.infinityfly.xin/sitemap.xml

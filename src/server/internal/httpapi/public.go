@@ -23,11 +23,11 @@ type TierMeta struct {
 
 // tierMetas 顺序即榜单从上到下的强弱顺序。
 var tierMetas = []TierMeta{
-	{Code: "hang", Label: "夯", Name: "闭眼冲", Desc: "天花板级、封神。自己去过两次以上，或者一口就知道要常来。不用犹豫，直接冲。", Color: "#b58f4a"},
-	{Code: "dingji", Label: "顶级", Name: "行业标杆", Desc: "顶尖水平，几乎无短板，仅次于夯。值得专门为它出门。", Color: "#d8b877"},
-	{Code: "renshang", Label: "人上人", Name: "有亮点", Desc: "中上游水准，比普通好一截，有亮点、不踩雷。", Color: "#8aa06b"},
-	{Code: "npc", Label: "NPC", Name: "平平无奇", Desc: "普通、平庸、没特色，不好不坏，主打一个路人甲。顺路可以吃，专门跑一趟就免了。", Color: "#8a8478"},
-	{Code: "la", Label: "拉完了", Name: "彻底避雷", Desc: "差到极致、彻底踩雷。难吃，或者不值这个价。钱是我的，我也心疼。", Color: "#a0503c"},
+	{Code: "hang", Label: "夯", Name: "闭眼冲", Desc: "天花板级、封神。自己去过两次以上，或者一口就知道要常来。不用犹豫，直接冲。", Color: "#A9762C"},
+	{Code: "dingji", Label: "顶级", Name: "行业标杆", Desc: "顶尖水平，几乎无短板，仅次于夯。值得专门为它出门。", Color: "#BE5A45"},
+	{Code: "renshang", Label: "人上人", Name: "有亮点", Desc: "中上游水准，比普通好一截，有亮点、不踩雷。", Color: "#5F8552"},
+	{Code: "npc", Label: "NPC", Name: "平平无奇", Desc: "普通、平庸、没特色，不好不坏，主打一个路人甲。顺路可以吃，专门跑一趟就免了。", Color: "#8B8178"},
+	{Code: "la", Label: "拉完了", Name: "彻底避雷", Desc: "差到极致、彻底踩雷。难吃，或者不值这个价。钱是我的，我也心疼。", Color: "#7C4A38"},
 }
 
 // hBootstrap 返回首页需要的全部数据：站点文案 + 内容量 + 榜单摘要。
@@ -67,6 +67,12 @@ func (s *Server) hBootstrap(w http.ResponseWriter, r *http.Request) {
 	avoidPage, _ := s.st.ListReviews(store.ReviewFilter{Status: "published", Kind: "tandian", Tiers: []string{"la"}, Sort: "new", Size: 6})
 	yuPage, _ := s.st.ListReviews(store.ReviewFilter{Status: "published", Kind: "yushanfang", Sort: "new", Size: 12})
 	shopPage, _ := s.st.ListShops("", "", "", 1, 6)
+	// 今日日报（v15）：只读不生成——生成由 StartDailyLoop/后台负责，
+	// 首页拿不到就少这块横条，不阻塞 bootstrap。
+	var dailyToday *store.DailyBrief
+	if db, err := s.st.GetDailyBrief(s.st.Now().Format("2006-01-02")); err == nil {
+		dailyToday = db
+	}
 
 	var featured any
 	if featPage != nil && len(featPage.Items) > 0 {
@@ -85,6 +91,7 @@ func (s *Server) hBootstrap(w http.ResponseWriter, r *http.Request) {
 		"avoid":       stripBodies(avoidPage),
 		"yushanfang":  stripBodies(yuPage),
 		"hot_shops":   shopPage,
+		"daily":       dailyToday,
 		"server_time": time.Now().Unix(),
 	}
 	s.jsonOK(w, out)

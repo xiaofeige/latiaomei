@@ -426,3 +426,23 @@ CREATE TABLE IF NOT EXISTS amap_poi (
   info       TEXT NOT NULL DEFAULT '',   -- amap.POI 的 JSON
   fetched_at INTEGER NOT NULL DEFAULT 0
 );
+
+-- ---------- v15: 辣条妹日报 · daily_brief ----------
+-- 每天早上一轮自动更新：从「本站已发布内容」里轮值挑今日主角（探店/御膳房），
+-- 拼上 AI 巡逻榜当日风评、许愿池呼声，产出「今日一句话判决 + 今日碎碎念」。
+-- 素材全部来自站内已人审放行的数据 + ai_rank（本就是巡逻引擎产物），
+-- 不引入未授权外部平台数据；LLM 只负责改写口吻，兜底走纯模板。
+-- date 主键 = 本地日期 YYYY-MM-DD，一天一条；站长可在后台改写覆盖（source=manual）。
+CREATE TABLE IF NOT EXISTS daily_brief (
+  date       TEXT PRIMARY KEY,
+  shop       TEXT NOT NULL DEFAULT '',      -- 今日主角店名
+  dish       TEXT NOT NULL DEFAULT '',      -- 今日主角菜
+  tier       TEXT NOT NULL DEFAULT 'hang',  -- 五档码，跟 reviews.tier 一致
+  verdict    TEXT NOT NULL DEFAULT '',      -- 今日一句话判决（≤30 字）
+  blurb      TEXT NOT NULL DEFAULT '',      -- 今日碎碎念（60-140 字）
+  slug       TEXT NOT NULL DEFAULT '',      -- 关联点评 slug（可空）
+  links      TEXT NOT NULL DEFAULT '[]',    -- JSON [{label,href}] 今日其他花絮
+  source     TEXT NOT NULL DEFAULT 'auto',  -- auto=引擎生成 / manual=站长改写 / fallback=无 LLM 模板
+  created_at INTEGER NOT NULL DEFAULT 0,
+  updated_at INTEGER NOT NULL DEFAULT 0
+);

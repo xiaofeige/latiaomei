@@ -12,6 +12,7 @@
 
   const TABS = [
     { key: 'home', href: '/', icon: '🏠', text: '首页' },
+    { key: 'daily', href: '/daily', icon: '📰', text: '日报' },
     { key: 'yushanfang', href: '/yushanfang', icon: '🍳', text: '御膳房' },
     { key: 'tandian', href: '/tandian', icon: '🌶', text: '探店' },
     { key: 'shops', href: '/shops', icon: '🗺', text: '店铺' },
@@ -20,6 +21,7 @@
   // 路由表：pattern + 页面名 + 是否把第一个捕获组当 slug
   const ROUTES = [
     [/^\/$/, 'home'],
+    [/^\/daily$/, 'daily'],
     [/^\/tandian$/, 'tandian'],
     [/^\/yushanfang$/, 'yushanfang'],
     [/^\/rank$/, 'rank'],

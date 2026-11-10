@@ -41,6 +41,9 @@ type Config struct {
 	DYAPIBase string // LATIAOMEI_DY_API_BASE，测试可指向桩
 	// 流水线 worker（tools/pipeline）访问 /api/pipeline/* 的静态 token；空=流水线接口关闭
 	PipelineToken string // LATIAOMEI_PIPELINE_TOKEN
+	// 只读运营数据接口 /api/ops/* 的静态 token（无限飞管理控制台小程序拉运营看板用）；
+	// 空=ops 接口关闭。走 X-Ops-Token 头，与后台会话/CSRF 体系互不相干，只出不进。
+	OpsToken string // LATIAOMEI_OPS_TOKEN
 	UploadMax     int64  // 单图上传上限（字节）
 	MediaMax      int64  // 非图片素材（视频/音频/文档）上传上限（字节）LATIAOMEI_MEDIA_MAX_MB
 	LLMBase       string // LATIAOMEI_LLM_API_BASE，OpenAI 兼容端点；管理小程序「AI 优化提示词」直连用
@@ -92,6 +95,7 @@ func Load() (*Config, error) {
 		DYSecret:      os.Getenv("LATIAOMEI_DY_SECRET"),
 		DYAPIBase:     env("LATIAOMEI_DY_API_BASE", "https://developer.toutiao.com"),
 		PipelineToken: os.Getenv("LATIAOMEI_PIPELINE_TOKEN"),
+		OpsToken:      os.Getenv("LATIAOMEI_OPS_TOKEN"),
 		UploadMax:     int64(envInt("LATIAOMEI_UPLOAD_MAX_MB", 6)) << 20,
 		MediaMax:      int64(envInt("LATIAOMEI_MEDIA_MAX_MB", 120)) << 20,
 		LLMBase:       env("LATIAOMEI_LLM_API_BASE", "https://dashscope.aliyuncs.com/compatible-mode/v1"),

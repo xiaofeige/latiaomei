@@ -132,7 +132,8 @@
     ['视频内容', [['video', '🎬', '视频工坊'], ['release', '🚦', '待放行'],
       ['tasks', '🛠', '任务队列'], ['cmd', '📣', '指令台账']]],
     ['内容管理', [['reviews', '🌶', '点评'], ['shops', '🏪', '店铺'],
-      ['tastes', '🏷', '标签'], ['uploads', '🖼', '图库'], ['patrol', '🛰', 'AI巡逻榜']]],
+      ['tastes', '🏷', '标签'], ['uploads', '🖼', '图库'], ['patrol', '🛰', 'AI巡逻榜'],
+      ['daily', '📰', '辣条妹日报']]],
     ['站点', [['settings', '⚙', '站点配置'], ['maint', '🧹', '维护']]],
   ];
   function sideHTML(active) {
@@ -743,6 +744,65 @@
       } catch (e) { out.textContent = act + ' 失败：' + e.message; }
       b.disabled = false;
     }));
+  }
+
+  /* ---------------- v16 辣条妹日报：每天自动上新，这里可重生/手改 ---------------- */
+  async function vDaily() {
+    shell('daily', '<div class="box"><h4>正在读日报…</h4></div>');
+    let d;
+    try { d = await api.get('/api/daily?limit=14'); }
+    catch (e) { shell('daily', errBox(e)); return; }
+    const b = d.today || {};
+    const srcTxt = b.source === 'auto' ? 'AI 辅笔' : b.source === 'manual' ? '亲笔改版' : '模板保底';
+    const tiers = [['hang', '夯'], ['dingji', '顶级'], ['renshang', '人上人'], ['npc', 'NPC'], ['la', '拉完了']];
+    const links = (b.links || []).map((l) =>
+      '<a class="btn sm" href="' + esc(l.href) + '" target="_blank" rel="noopener">' + esc(l.label) + '</a>').join(' ') || '<span class="hint">今天没花絮</span>';
+    shell('daily',
+      '<div class="box"><h4>今日日报 · ' + esc(b.date || '') + '（' + esc(srcTxt) + '）</h4>' +
+      '<div class="hint" style="margin:0 0 6px;font-size:13px;color:#333"><b>' + esc(b.verdict || '') + '</b><br>' + esc(b.blurb || '') + '</div>' +
+      '<div class="btnrow">' + links + '</div>' +
+      '<div class="adm-form" style="margin-top:10px">' +
+      '<div class="row">' +
+      '<label>今日主角店<input id="d_shop" value="' + esc(b.shop || '') + '"></label>' +
+      '<label>菜名<input id="d_dish" value="' + esc(b.dish || '') + '"></label>' +
+      '<label>档位<select id="d_tier">' + tiers.map((t) =>
+        '<option value="' + t[0] + '"' + (t[0] === (b.tier || 'hang') ? ' selected' : '') + '>' + t[1] + '</option>').join('') + '</select></label>' +
+      '<label>关联点评 slug<input id="d_slug" value="' + esc(b.slug || '') + '"></label></div>' +
+      '<label>今日一句话判决（≤30 字）<input id="d_verdict" value="' + esc(b.verdict || '') + '"></label>' +
+      '<label>今日碎碎念（60-140 字）<textarea id="d_blurb">' + esc(b.blurb || '') + '</textarea></label>' +
+      '</div>' +
+      '<div class="btnrow" style="margin-top:9px">' +
+      '<button class="btn p" type="button" id="d_save">保存手改</button>' +
+      '<button class="btn" type="button" id="d_regen">重新生成（覆盖手改）</button>' +
+      '<a class="btn a" href="/daily" target="_blank" rel="noopener">看前台</a>' +
+      '<span class="hint">引擎每天自动上新；手改过的当天不再被自动覆盖。</span></div>' +
+      '<div id="d_out" class="hint"></div></div>' +
+      '<div class="box" style="margin-top:11px"><h4>往期台账</h4><table class="adm-t"><tr><th>日期</th><th>判决</th><th>主角</th><th>来源</th></tr>' +
+      (d.list || []).map((x) => '<tr><td>' + esc(x.date) + '</td><td>' + esc(x.verdict) + '</td><td>' +
+        esc(x.shop || '—') + '</td><td>' + esc(x.source) + '</td></tr>').join('') + '</table></div>');
+    document.getElementById('d_save').addEventListener('click', async () => {
+      const btn = document.getElementById('d_save'), out = document.getElementById('d_out');
+      btn.disabled = true; out.textContent = '存一下…';
+      try {
+        await api.post('/api/admin/daily', {
+          shop: document.getElementById('d_shop').value,
+          dish: document.getElementById('d_dish').value,
+          tier: document.getElementById('d_tier').value,
+          slug: document.getElementById('d_slug').value,
+          verdict: document.getElementById('d_verdict').value,
+          blurb: document.getElementById('d_blurb').value,
+        });
+        out.textContent = '已保存，前台就是这版';
+      } catch (e) { out.textContent = '保存失败：' + e.message; }
+      btn.disabled = false;
+    });
+    document.getElementById('d_regen').addEventListener('click', async () => {
+      if (!confirm('引擎重跑今日日报（会覆盖手改），确？')) return;
+      const btn = document.getElementById('d_regen'), out = document.getElementById('d_out');
+      btn.disabled = true; out.textContent = '正在生成…';
+      try { await api.post('/api/admin/daily/run', {}); out.textContent = '好了，正在刷新'; vDaily(); }
+      catch (e) { out.textContent = '生成失败：' + e.message; btn.disabled = false; }
+    });
   }
 
   /* ============ 干活台（v14）：项目 / 待放行 / 任务 / 指令 ============ */
@@ -1407,7 +1467,7 @@
 
   /* ---------------- 路由 ---------------- */
   function vVideoRoute() { return hashParam('id') ? vProject() : vVideo(); }
-  const VIEWS = { overview: vOverview, video: vVideoRoute, release: vRelease, tasks: vTasks, cmd: vCmd, reviews: vReviews, shops: vShops, tastes: vTastes, settings: vSettings, uploads: vUploads, maint: vMaint, patrol: vPatrol };
+  const VIEWS = { overview: vOverview, video: vVideoRoute, release: vRelease, tasks: vTasks, cmd: vCmd, reviews: vReviews, shops: vShops, tastes: vTastes, settings: vSettings, uploads: vUploads, maint: vMaint, patrol: vPatrol, daily: vDaily };
   function render() {
     if (!csrf) { loginView(''); return; }
     stopOpsPoll();

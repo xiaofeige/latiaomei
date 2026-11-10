@@ -45,6 +45,52 @@ window.PAGES = (function () {
       '<div class="mtr">' + L.meter(r.score) + '</div></div></a>';
   }
 
+  /* 辣条妹日报横条：首页每天自动上新的今日判决 + 碎碎念（bootstrap 里的 d.daily） */
+  function dailyStrip(d) {
+    const b = d.daily;
+    if (!b || !b.verdict) return '';
+    const md = (b.date || '').slice(5).replace('-', '/');
+    const links = (b.links || []).slice(0, 3).map((l) =>
+      '<a href="' + esc(l.href) + '" data-track>' + esc(l.label) + '</a>').join('');
+    return '<section class="daily-strip">' +
+      '<div class="ds-stamp"><b>' + esc(md) + '</b><small>DAILY</small></div>' +
+      '<div class="ds-main"><div class="ds-verdict">' + esc(b.verdict) + '</div>' +
+      '<p class="ds-blurb">' + esc(b.blurb) + '</p>' +
+      (links ? '<div class="ds-links">' + links + '</div>' : '') + '</div>' +
+      '<a class="ds-more" href="/daily" data-track>今日报 →</a></section>';
+  }
+
+  /* ============ 辣条妹日报 /daily：今日大报头 + 往期时间线 ============ */
+  async function daily() {
+    const [d, boot] = await Promise.all([L.api.get('/api/daily', { limit: 30 }), L.boot()]);
+    const b = d.today || {};
+    const fmt = (s) => (s || '').replace(/-/g, '/');
+    const srcTxt = b.source === 'auto' ? 'AI 辅笔 · 每日上新'
+      : b.source === 'manual' ? '辣条妹亲笔改版' : '模板保底 · 每日上新';
+    let body = '<section class="daily-head">' +
+      '<div class="dh-top"><div class="m">' + L.mascot({ mouth: 'open' }) + '</div>' +
+      '<div class="dh-k">LATIAOMEI DAILY · 辣条妹日报</div>' +
+      '<div class="dh-date">' + esc(fmt(b.date)) + '</div></div>' +
+      '<div class="dh-verdict">' + esc(b.verdict || '今天的报还在路上') + '</div>' +
+      (b.shop ? '<div class="dh-sub">今日主角 · ' + esc(b.shop) + (b.dish ? ' · ' + esc(b.dish) : '') +
+        (b.tier_label ? '（' + esc(b.tier_label) + '）' : '') + '</div>' : '') +
+      '<p class="dh-blurb">' + esc(b.blurb || '') + '</p>' +
+      '<div class="dh-links">' + (b.links || []).map((l) =>
+        '<a href="' + esc(l.href) + '" data-track>' + esc(l.label) + '</a>').join('') + '</div>' +
+      '<span class="dh-src">' + esc(srcTxt) + '</span></section>';
+    body += sect('往期日报');
+    const past = (d.list || []).slice(1);
+    body += past.length
+      ? '<div class="daily-arch">' + past.map((x) =>
+        '<div class="darch"><div class="d">' + esc(fmt(x.date)) + '</div>' +
+        '<div><div class="t">' + esc(x.verdict) + '</div>' +
+        (x.slug ? '<a href="/review/' + esc(x.slug) + '" data-track><div class="s">' + esc(x.blurb) + '</div></a>'
+          : '<div class="s">' + esc(x.blurb) + '</div>') + '</div></div>').join('') + '</div>'
+      : '<div class="loadmore">往期还没攒下来 —— 从今天起每天见</div>';
+    body += foot(boot);
+    return { title: '辣条妹日报', sub: '每天更新一点，常来常新', tab: 'daily', body: body };
+  }
+
   /* ============ 首页：IP Hero × Tab 转盘 + 今日推荐卡 ============ */
   async function home() {
     const d = await L.boot(true);
@@ -150,6 +196,9 @@ window.PAGES = (function () {
         })() +
       '</div>' +
     '</section>';
+
+    // 辣条妹日报横条：每天自动上新，回访的人每次来都有今日新内容。
+    body += dailyStrip(d);
 
     // 辣条妹今日推荐：一字判决风格的小卡，特写优先、封神榜补位、新上桌兜底
     const recs = [];
@@ -287,6 +336,7 @@ window.PAGES = (function () {
     if (site.douyin_url) links.push('<a href="' + esc(site.douyin_url) + '" target="_blank" rel="noopener">抖音</a>');
     if (site.xhs_url) links.push('<a href="' + esc(site.xhs_url) + '" target="_blank" rel="noopener">小红书</a>');
     links.push('<a href="/about" data-track>评级标准</a>');
+    links.push('<a href="/daily" data-track>辣条妹日报</a>');
     links.push('<a href="/rank" data-track>排行榜</a>');
     links.push('<a href="/ai-rank" data-track>AI 巡逻榜</a>');
     links.push('<a href="/shops" data-track>店铺档案</a>');
@@ -641,5 +691,5 @@ window.PAGES = (function () {
     return { title: '这条不存在', sub: '404', body: L.empty('走错门了', '点底部「首页」重新找') };
   }
 
-  return { home, tandian, yushanfang, rank, shops, shop, review, taste, about, search, airank, notfound, foot, sect, link, shopCard };
+  return { home, tandian, yushanfang, rank, shops, shop, review, taste, about, search, airank, daily, notfound, foot, sect, link, shopCard };
 })();
